@@ -1,16 +1,12 @@
-"""Imagen slide generation + Gemini Pro vision analysis.
+"""Imagen slide generation — fast path only.
 
 Flow:
-1. Imagen 4.0 Fast generates a keynote slide image
-2. Gemini 2.5 Pro (vision) analyzes the generated image
-3. The analysis text is returned to Alex (short, fits in 32K context)
-4. The actual image is stored in session state for the WebSocket handler
+1. Imagen 4.0 Fast generates a keynote slide image (~2-3s)
+2. The image is pushed to a global slide queue for the WebSocket handler
    to forward to the client — bypasses the model context entirely
+3. A brief text description is returned to Alex so it can narrate
 
-Three models working together:
-- Imagen creates the visual
-- Gemini Pro sees and describes it
-- Gemini Flash (Alex) speaks about it
+Single model, minimal latency — critical for Live API tool timeout window.
 """
 
 import base64
@@ -20,7 +16,6 @@ import queue
 
 from google import genai
 from google.adk.tools import ToolContext
-from google.genai import types
 from google.genai.types import GenerateImagesConfig
 
 logger = logging.getLogger(__name__)
@@ -42,54 +37,12 @@ def _get_client() -> genai.Client:
     return _genai_client
 
 
-def _analyze_image(image_bytes: bytes, topic: str) -> str:
-    """Use Gemini 2.5 Pro (vision) to analyze the generated slide.
-
-    Returns a concise description of what's actually on the slide —
-    text, diagrams, visual elements, layout. This is what Alex will
-    narrate from, so it must be accurate and descriptive.
-    """
-    try:
-        client = _get_client()
-        analysis_prompt = (
-            f"You are a slide analyst for a keynote presenter. "
-            f"Describe this presentation slide in 2-3 sentences. "
-            f"Focus on: the title text, key visual elements, "
-            f"diagrams or icons shown, and the overall message. "
-            f"The topic is '{topic}'. Be specific about what you "
-            f"actually see — colors, layout, text content. "
-            f"Keep it under 60 words."
-        )
-        response = client.models.generate_content(
-            model="gemini-2.5-pro",
-            contents=[
-                types.Content(
-                    parts=[
-                        types.Part.from_bytes(
-                            data=image_bytes,
-                            mime_type="image/png",
-                        ),
-                        types.Part(text=analysis_prompt),
-                    ],
-                    role="user",
-                )
-            ],
-        )
-        analysis = response.text.strip()
-        logger.info("Slide analysis for '%s': %s", topic, analysis[:100])
-        return analysis
-    except Exception as e:
-        logger.error("Slide analysis failed: %s", e)
-        return f"A presentation slide about {topic}."
-
-
 def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> dict:
-    """Generate a presentation slide and analyze what's on it.
+    """Generate a presentation slide and push it to the audience screen.
 
-    Creates a professional keynote slide using Imagen, then uses Gemini Pro
-    vision to analyze the generated image. The actual image is sent to the
-    audience's screen automatically. You receive a description of what the
-    slide shows so you can narrate about it naturally.
+    Creates a professional keynote slide using Imagen. The actual image is
+    sent to the audience's screen automatically via the slide queue. You
+    receive the topic and key points back so you can narrate naturally.
 
     Args:
         topic: The slide title. Example: "Agent Development Kit (ADK)"
@@ -97,8 +50,7 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
             Example: "Open source framework, Model agnostic, Build agents in minutes"
 
     Returns:
-        A description of what's actually shown on the slide. Use this to
-        narrate — describe what the audience is seeing on screen.
+        Confirmation with topic and key points for narration.
     """
     try:
         prompt = (
@@ -131,24 +83,26 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
 
         logger.info("Slide generated: %d bytes for '%s'", len(image_bytes), topic)
 
-        # Step 2: Gemini Pro vision analyzes the generated slide
-        slide_description = _analyze_image(image_bytes, topic)
-
         # Push image to the global slide queue for the WebSocket handler
         # The model NEVER sees the base64 — only the text description
         slide_queue.put({
             "image": image_b64,
             "topic": topic,
         })
+        logger.info("Slide queued for delivery: '%s'", topic)
 
         return {
             "status": "success",
             "topic": topic,
-            "what_the_slide_shows": slide_description,
+            "what_the_slide_shows": (
+                f"A presentation slide titled '{topic}' is now on screen. "
+                f"Key concepts shown: {key_points}. "
+                f"Describe what the audience is seeing based on these points."
+            ),
         }
 
     except Exception as e:
-        logger.error("Slide generation failed: %s", e)
+        logger.error("Slide generation failed for '%s': %s", topic, e, exc_info=True)
         return {
             "status": "error",
             "topic": topic,

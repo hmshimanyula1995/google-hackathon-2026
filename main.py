@@ -163,8 +163,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             # Send audio as binary frame (no base64 overhead)
                             await websocket.send_bytes(part.inline_data.data)
                         elif part.function_response:
-                            # After generate_slide runs, the image is in session state
-                            # (not in the tool response — to avoid 32K context overflow)
+                            # Tool responses are internal — image is in slide_queue
                             pass
                         elif part.text:
                             await websocket.send_text(
@@ -186,21 +185,6 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             json.dumps({"type": "user_transcript", "text": text})
                         )
 
-                # Drain slide queue — forward any generated slides to client
-                while not image_tool.slide_queue.empty():
-                    try:
-                        slide_data = image_tool.slide_queue.get_nowait()
-                        await websocket.send_text(
-                            json.dumps({
-                                "type": "slide",
-                                "image": slide_data["image"],
-                                "topic": slide_data["topic"],
-                            })
-                        )
-                        logger.info("Slide sent to client: %s", slide_data["topic"])
-                    except Exception:
-                        break
-
                 # Send interruption signal — client MUST clear audio buffer
                 if hasattr(event, "interrupted") and event.interrupted:
                     await websocket.send_text(
@@ -218,10 +202,47 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         except Exception as e:
             logger.error("Downstream error: %s", e)
 
+    async def slide_drainer_task():
+        """Dedicated slide delivery — polls slide_queue independently.
+
+        Runs every 300ms so slides arrive promptly even when the event
+        stream is paused during tool execution.
+        """
+        try:
+            while True:
+                while not image_tool.slide_queue.empty():
+                    try:
+                        slide_data = image_tool.slide_queue.get_nowait()
+                    except queue.Empty:
+                        break
+                    try:
+                        await websocket.send_text(
+                            json.dumps({
+                                "type": "slide",
+                                "image": slide_data["image"],
+                                "topic": slide_data["topic"],
+                            })
+                        )
+                        logger.info(
+                            "Slide delivered to client: '%s' (%d KB)",
+                            slide_data["topic"],
+                            len(slide_data["image"]) // 1024,
+                        )
+                    except Exception as e:
+                        logger.error("Failed to send slide '%s': %s", slide_data.get("topic"), e)
+                await asyncio.sleep(0.3)
+        except WebSocketDisconnect:
+            logger.info("Client disconnected (slide drainer): %s", session_id)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.error("Slide drainer error: %s", e)
+
     try:
         await asyncio.gather(
             upstream_task(),
             downstream_task(),
+            slide_drainer_task(),
         )
     finally:
         live_request_queue.close()
