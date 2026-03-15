@@ -1,6 +1,10 @@
 # Agent documentation (confidential)
 .agent/
 
+# AI assistant instructions (private)
+CLAUDE.md
+AGENTS.md
+
 # Environment
 .env
 .venv/
