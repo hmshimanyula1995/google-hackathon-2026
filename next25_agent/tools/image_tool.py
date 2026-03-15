@@ -16,6 +16,7 @@ Three models working together:
 import base64
 import logging
 import os
+import queue
 
 from google import genai
 from google.adk.tools import ToolContext
@@ -25,6 +26,9 @@ from google.genai.types import GenerateImagesConfig
 logger = logging.getLogger(__name__)
 
 _genai_client: genai.Client | None = None
+
+# Global slide queue — image_tool pushes, main.py WebSocket handler reads
+slide_queue: queue.Queue = queue.Queue()
 
 
 def _get_client() -> genai.Client:
@@ -47,6 +51,15 @@ def _analyze_image(image_bytes: bytes, topic: str) -> str:
     """
     try:
         client = _get_client()
+        analysis_prompt = (
+            f"You are a slide analyst for a keynote presenter. "
+            f"Describe this presentation slide in 2-3 sentences. "
+            f"Focus on: the title text, key visual elements, "
+            f"diagrams or icons shown, and the overall message. "
+            f"The topic is '{topic}'. Be specific about what you "
+            f"actually see — colors, layout, text content. "
+            f"Keep it under 60 words."
+        )
         response = client.models.generate_content(
             model="gemini-2.5-pro",
             contents=[
@@ -56,15 +69,7 @@ def _analyze_image(image_bytes: bytes, topic: str) -> str:
                             data=image_bytes,
                             mime_type="image/png",
                         ),
-                        types.Part.from_text(
-                            f"You are a slide analyst for a keynote presenter. "
-                            f"Describe this presentation slide in 2-3 sentences. "
-                            f"Focus on: the title text, key visual elements, "
-                            f"diagrams or icons shown, and the overall message. "
-                            f"The topic is '{topic}'. Be specific about what you "
-                            f"actually see — colors, layout, text content. "
-                            f"Keep it under 60 words."
-                        ),
+                        types.Part(text=analysis_prompt),
                     ],
                     role="user",
                 )
@@ -129,10 +134,12 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
         # Step 2: Gemini Pro vision analyzes the generated slide
         slide_description = _analyze_image(image_bytes, topic)
 
-        # Store image in session state for the WebSocket handler
+        # Push image to the global slide queue for the WebSocket handler
         # The model NEVER sees the base64 — only the text description
-        tool_context.state["temp:slide_image"] = image_b64
-        tool_context.state["temp:slide_topic"] = topic
+        slide_queue.put({
+            "image": image_b64,
+            "topic": topic,
+        })
 
         return {
             "status": "success",
