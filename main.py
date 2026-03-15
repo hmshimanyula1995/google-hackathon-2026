@@ -10,6 +10,10 @@ import logging
 import os
 import uuid
 
+from dotenv import load_dotenv
+
+load_dotenv()  # Load .env BEFORE any Google imports
+
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
