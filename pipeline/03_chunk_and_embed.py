@@ -34,7 +34,9 @@ CHUNK_WINDOW_SECONDS = 120
 CHUNK_OVERLAP_SECONDS = 15
 EMBEDDING_MODEL = "text-embedding-005"
 EMBEDDING_DIMENSIONS = 768
-EMBEDDING_BATCH_SIZE = 250
+# text-embedding-005 has a 20K token input limit per batch.
+# Each 2-min chunk is ~300-500 tokens with prefix. 20 chunks per batch is safe.
+EMBEDDING_BATCH_SIZE = 20
 
 
 def chunk_transcript(transcript_data: dict) -> list[dict]:
