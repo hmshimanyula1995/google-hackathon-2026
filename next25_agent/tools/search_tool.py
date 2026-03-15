@@ -4,9 +4,12 @@ This is the single source of truth for all knowledge retrieval.
 Every factual claim Alex makes must originate from this tool.
 """
 
+import logging
 import os
 
 import vertexai
+
+logger = logging.getLogger(__name__)
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
 from google.cloud.firestore_v1.vector import Vector
@@ -72,6 +75,8 @@ def search_next25_sessions(query: str, top_k: int = 5) -> dict:
         title, track, speakers, youtube_url, start_time, and raw_text content.
     """
     try:
+        logger.info("Search query: '%s' (top_k=%d)", query, top_k)
+
         # Embed the query
         query_embedding = _embed_query(query)
 
@@ -89,6 +94,7 @@ def search_next25_sessions(query: str, top_k: int = 5) -> dict:
         docs = list(vector_query.stream())
 
         if not docs:
+            logger.warning("No results for query: '%s'", query)
             return {
                 "status": "no_results",
                 "query": query,
@@ -107,6 +113,12 @@ def search_next25_sessions(query: str, top_k: int = 5) -> dict:
                 "start_time": data.get("start_time", 0),
                 "raw_text": data.get("raw_text", ""),
             })
+
+        logger.info(
+            "Search returned %d results for: '%s'",
+            len(results),
+            query,
+        )
 
         return {
             "status": "success",

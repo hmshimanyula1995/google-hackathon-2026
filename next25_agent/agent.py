@@ -10,6 +10,7 @@ Architecture:
 - Presentation formatting handled by root_agent directly (no PresenterAgent)
 """
 
+import logging
 import os
 from typing import Optional
 
@@ -17,6 +18,9 @@ from google.adk.agents import LlmAgent
 from google.adk.models.google_llm import Gemini
 from google.adk.tools import agent_tool
 from google.genai import types
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 
 from .tools.search_tool import search_next25_sessions
 
@@ -80,9 +84,17 @@ def before_agent_callback(
         state["presentation_section"] = 0
         state["bridge_suggestion"] = ""
         state["turn_count"] = 0
+        logger.info("Session initialized — presenting mode")
 
     # Increment turn counter
-    state["turn_count"] = state.get("turn_count", 0) + 1
+    turn = state.get("turn_count", 0) + 1
+    state["turn_count"] = turn
+    logger.info(
+        "Turn %d | mode=%s | topics=%s",
+        turn,
+        state.get("mode", "?"),
+        state.get("topics_asked", ""),
+    )
 
     return None  # Proceed normally
 
@@ -94,19 +106,19 @@ def after_agent_callback(
     state = callback_context.state
 
     # Extract topics from the conversation context
-    # Look at recent events for user messages
     session = callback_context._invocation_context.session
     last_user_text = ""
     for event in reversed(session.events):
         if event.author == "user" and event.content and event.content.parts:
             for part in event.content.parts:
-                if part.text:
+                if hasattr(part, "text") and part.text:
                     last_user_text = part.text
                     break
             if last_user_text:
                 break
 
     if last_user_text:
+        logger.info("User said: %s", last_user_text[:100])
         new_topics = _extract_topics(last_user_text)
         existing = state.get("topics_asked", "")
         existing_list = [t.strip() for t in existing.split(",") if t.strip()]
@@ -114,6 +126,7 @@ def after_agent_callback(
         for topic in new_topics:
             if topic not in existing_list:
                 existing_list.append(topic)
+                logger.info("New topic detected: %s", topic)
 
         state["topics_asked"] = ", ".join(existing_list)
 
@@ -121,6 +134,7 @@ def after_agent_callback(
         bridge = _check_bridges(existing_list)
         if bridge:
             state["bridge_suggestion"] = bridge
+            logger.info("Bridge suggestion: %s", bridge[:80])
 
     return None  # Use agent's response as-is
 
@@ -264,13 +278,22 @@ DO NOT:
 </presenting_style>
 
 <interruption_handling>
-When someone speaks during your presentation:
+When someone speaks during your presentation, LISTEN TO WHAT THEY SAID and respond appropriately:
 
-If you're mid-section: "Love that energy — hold that thought for ten seconds, let me land this point." Finish your current thought in 1-2 sentences max, then address them.
+If they ask a QUESTION (who, what, when, why, how, can you, tell me, what about, explain):
+→ STOP presenting immediately. Answer their question using search_next25_sessions. Be direct and concise.
+→ After answering, offer: "Want me to keep going with the keynote?"
 
-If you're between sections: Switch to QA mode immediately. Answer their question using search_next25_sessions. When done, offer to continue: "Great question. Want me to keep going with the presentation, or do you have more questions?"
+If they say something SHORT and unclear (like "hmm", "yeah", "ok", a single word):
+→ Briefly acknowledge and continue your current section.
 
-If they say "continue", "next", "keep going", "go on": Resume the next section of your presentation arc.
+If they say "continue", "next", "keep going", "go on", "yes please":
+→ Resume the next section of your presentation arc immediately.
+
+If they upload an image or mention an image:
+→ STOP presenting immediately. Use vision_agent to analyze the image. Respond about what you see.
+
+NEVER say "hold that thought" when someone asks a direct question. That's rude. Answer them.
 </interruption_handling>
 
 <grounding_rules>
@@ -284,8 +307,10 @@ If they say "continue", "next", "keep going", "go on": Resume the next section o
 <response_limits>
 - Maximum 150 words per response. ~60 seconds of audio.
 - Short sentences. 8-12 words average.
-- No text formatting. No markdown. No bullets. You're SPEAKING.
+- ABSOLUTELY NO TEXT FORMATTING. No asterisks, no markdown, no **bold**, no *italic*, no bullet points, no numbered lists, no headers. You are producing AUDIO. Formatting characters will be spoken aloud and sound terrible. Write plain text only.
 - Use contractions: it's, they're, what's, here's, that's, we're
+- Say "ADK" not "A.D.K." — say it as a word
+- Say "A2A" as "A to A" or "Agent to Agent"
 </response_limits>
 
 <bridge_awareness>
