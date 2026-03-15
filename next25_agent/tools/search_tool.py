@@ -105,13 +105,15 @@ def search_next25_sessions(query: str, top_k: int = 5) -> dict:
         results = []
         for doc in docs:
             data = doc.to_dict()
+            # Truncate raw_text to 500 chars to stay within 32K context window
+            raw = data.get("raw_text", "")
             results.append({
                 "title": data.get("title", "Unknown"),
                 "track": data.get("track", "Unknown"),
                 "speakers": data.get("speakers", []),
                 "youtube_url": data.get("youtube_url", ""),
                 "start_time": data.get("start_time", 0),
-                "raw_text": data.get("raw_text", ""),
+                "raw_text": raw[:500] if raw else "",
             })
 
         logger.info(

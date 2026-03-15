@@ -161,30 +161,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             # Send audio as binary frame (no base64 overhead)
                             await websocket.send_bytes(part.inline_data.data)
                         elif part.function_response:
-                            # Check for slide-related tool responses
-                            fr = part.function_response
-                            if fr.name in ("generate_slide", "next_slide", "create_slide") and fr.response:
-                                resp = fr.response
-                                # Direct Imagen response (has image_base64)
-                                if resp.get("image_base64"):
-                                    await websocket.send_text(
-                                        json.dumps({
-                                            "type": "slide",
-                                            "image": resp["image_base64"],
-                                            "topic": resp.get("topic", ""),
-                                        })
-                                    )
-                                    logger.info("Slide sent to client: %s", resp.get("topic"))
-                                # A2A response (has slide_description but no image)
-                                elif resp.get("slide_description"):
-                                    await websocket.send_text(
-                                        json.dumps({
-                                            "type": "slide_text",
-                                            "topic": resp.get("topic", ""),
-                                            "description": resp.get("slide_description", ""),
-                                        })
-                                    )
-                                    logger.info("Slide description sent: %s", resp.get("topic"))
+                            # After generate_slide runs, the image is in session state
+                            # (not in the tool response — to avoid 32K context overflow)
+                            pass
                         elif part.text:
                             await websocket.send_text(
                                 json.dumps({"type": "text", "text": part.text})
@@ -204,6 +183,22 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         await websocket.send_text(
                             json.dumps({"type": "user_transcript", "text": text})
                         )
+
+                # Check session state for slide images (set by generate_slide tool)
+                if event.actions and event.actions.state_delta:
+                    delta = event.actions.state_delta
+                    if "temp:slide_image" in delta:
+                        slide_b64 = delta["temp:slide_image"]
+                        slide_topic = delta.get("temp:slide_topic", "")
+                        if slide_b64:
+                            await websocket.send_text(
+                                json.dumps({
+                                    "type": "slide",
+                                    "image": slide_b64,
+                                    "topic": slide_topic,
+                                })
+                            )
+                            logger.info("Slide sent to client: %s", slide_topic)
 
                 # Send interruption signal — client MUST clear audio buffer
                 if hasattr(event, "interrupted") and event.interrupted:

@@ -1,7 +1,9 @@
 """Imagen slide generation tool for the Next Live agent.
 
 Generates presentation slides using Imagen on Vertex AI.
-Returns base64 image data that the frontend displays alongside Alex's voice.
+The image is stored in session state for the WebSocket handler to forward
+to the client. Only a short text description is returned to the model
+to avoid overflowing the 32K context window.
 """
 
 import base64
@@ -9,6 +11,7 @@ import logging
 import os
 
 from google import genai
+from google.adk.tools import ToolContext
 from google.genai.types import GenerateImagesConfig
 
 logger = logging.getLogger(__name__)
@@ -17,7 +20,6 @@ _genai_client: genai.Client | None = None
 
 
 def _get_client() -> genai.Client:
-    """Get or create the GenAI client."""
     global _genai_client
     if _genai_client is None:
         _genai_client = genai.Client(
@@ -28,20 +30,21 @@ def _get_client() -> genai.Client:
     return _genai_client
 
 
-def generate_slide(topic: str, key_points: str) -> dict:
+def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> dict:
     """Generate a presentation slide image for the current topic.
 
     Creates a professional keynote-style slide using Google's Imagen model.
-    The slide is displayed in the client UI alongside Alex's voice narration.
-    Call this at the start of each presentation section to generate a visual.
+    The slide image is stored in session state for the client to display.
+    Only a short description is returned to you — the audience sees the
+    full visual on their screen.
 
     Args:
-        topic: The section title for the slide. Example: "Agent Development Kit (ADK)"
+        topic: The slide title. Example: "Agent Development Kit (ADK)"
         key_points: 2-3 key bullet points to visualize. Example:
             "Open source framework, Model agnostic, Build agents in minutes"
 
     Returns:
-        A dictionary with status and base64 image data.
+        A short description of the slide. The actual image is sent to the audience automatically.
     """
     try:
         prompt = (
@@ -72,19 +75,24 @@ def generate_slide(topic: str, key_points: str) -> dict:
         image_bytes = response.generated_images[0].image.image_bytes
         image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
-        logger.info("Slide generated: %d bytes", len(image_bytes))
+        logger.info("Slide generated: %d bytes for '%s'", len(image_bytes), topic)
 
+        # Store image in session state for the WebSocket handler to pick up
+        # DO NOT return base64 to the model — it would overflow the 32K context window
+        tool_context.state["temp:slide_image"] = image_b64
+        tool_context.state["temp:slide_topic"] = topic
+
+        # Return only a SHORT description to the model
         return {
             "status": "success",
-            "image_base64": image_b64,
-            "mime_type": "image/png",
             "topic": topic,
+            "description": f"Slide displayed: '{topic}' showing {key_points}",
         }
 
     except Exception as e:
         logger.error("Slide generation failed: %s", e)
         return {
             "status": "error",
-            "message": f"Slide generation failed: {str(e)}",
-            "image_base64": "",
+            "topic": topic,
+            "description": f"Slide generation failed, continuing without visual.",
         }
