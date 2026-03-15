@@ -1,0 +1,21 @@
+# Agent documentation (confidential)
+.agent/
+
+# Environment
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Pipeline raw data (large files)
+pipeline/data/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# ADK local state
+.adk/
