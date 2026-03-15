@@ -1,0 +1,26 @@
+# Pipeline data (large, not needed at runtime)
+pipeline/data/
+pipeline/
+
+# Agent internal docs
+.agent/
+
+# Local env and state
+.env
+.venv/
+.adk/
+__pycache__/
+*.pyc
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Session DBs (local only)
+*.db
