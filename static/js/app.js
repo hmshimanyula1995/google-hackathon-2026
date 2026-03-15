@@ -21,6 +21,9 @@ const disconnectBtn = document.getElementById("disconnect-btn");
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const chatMessages = document.getElementById("chat-messages");
+const slideContainer = document.getElementById("slide-container");
+const slideImage = document.getElementById("slide-image");
+const slideTopic = document.getElementById("slide-topic");
 
 // --- Audio Player (24kHz output from Gemini) ---
 
@@ -169,7 +172,12 @@ async function connect() {
         } else {
             const data = JSON.parse(event.data);
 
-            if (data.type === "interrupted") {
+            if (data.type === "slide") {
+                // Display generated presentation slide
+                slideImage.src = `data:image/png;base64,${data.image}`;
+                slideTopic.textContent = data.topic || "";
+                slideContainer.style.display = "block";
+            } else if (data.type === "interrupted") {
                 clearAudioBuffer();
                 currentAlexBubble = null;
             } else if (data.type === "transcript") {

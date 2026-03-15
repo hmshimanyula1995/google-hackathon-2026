@@ -27,6 +27,7 @@ from google.genai import types
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 
+from .tools.image_tool import generate_slide
 from .tools.search_tool import search_next25_sessions
 
 # ---------------------------------------------------------------------------
@@ -206,11 +207,9 @@ root_agent = LlmAgent(
     model=root_model,
     description="Alex — the voice of Next Live. A keynote presenter delivering the story of Google Cloud Next '25.",
     output_key="final_response",
-    # Direct FunctionTool only — no AgentTool.
-    # Vision is handled by the root agent directly (native audio model supports image input).
-    # AgentTool does NOT forward image data in BIDI mode, so vision_agent never receives the image.
     tools=[
         search_next25_sessions,
+        generate_slide,
     ],
     generate_content_config=types.GenerateContentConfig(
         temperature=0.4,
@@ -269,7 +268,10 @@ Deliver your keynote in SHORT bursts — 50 to 70 words maximum per turn. After 
 
 Each section uses the Problem-Agitation-Solution framework with a hook, a reveal, and a bridge.
 
+SLIDE GENERATION: At the START of each section, call generate_slide with the section topic and 2-3 key points. This creates a visual slide that displays in the audience's browser while you speak. Do this BEFORE you start talking about the section — the slide should appear first, then you narrate.
+
 SECTION 1 — THE BIG PICTURE
+Generate slide: topic="Google Cloud Next '25", key_points="700+ sessions, 231 announcements, 30,000 developers, AI agents everywhere"
 Use the "Imagine" technique. Paint the scene at Next '25.
 Search for: "Google Cloud Next 2025 keynote AI agents announcements overview"
 Problem: There are too many announcements to absorb. 700 sessions.
@@ -277,6 +279,7 @@ Reveal: The through-line is AI agents. Google laid out an entire ecosystem.
 Bridge: "Have you ever tried to build an agent from scratch? Yeah. It's painful. Well, Google just fixed that."
 
 SECTION 2 — ADK (The Developer Story)
+Generate slide: topic="Agent Development Kit (ADK)", key_points="Open source, Model agnostic, Build agents like regular software"
 Use the Delayed Reveal. Don't say "ADK" right away. Build to it.
 Search for: "ADK Agent Development Kit launch announcement open source"
 Problem: Building agents is hard. Different frameworks. No standards. Months of work.
@@ -285,6 +288,7 @@ Reveal: "So Google announced ADK. Open source. Model agnostic. And it makes buil
 Bridge: "But here's the thing. What good is one agent if it can't talk to other agents?"
 
 SECTION 3 — A TO A (The Connection Story)
+Generate slide: topic="Agent-to-Agent Protocol (A2A)", key_points="Open standard, 50+ companies, Cross-framework agent communication"
 Use Antithesis for contrast. Old way vs new way.
 Search for: "A2A Agent to Agent protocol announcement interoperability"
 Problem: Agents are siloed. Your agent can't talk to your partner's agent.
@@ -292,16 +296,27 @@ Reveal: "Agent to Agent protocol. Open standard. 50 plus companies. Your agent c
 Bridge: "That's not incremental. That's a paradigm shift. And companies are already shipping with it."
 
 SECTION 4 — REAL WORLD (The Proof)
+Generate slide: topic="Real-World Impact", key_points="Production deployments, Enterprise scale, Measurable results"
 Use Micro-Stories. Tell real customer stories with specific numbers.
 Search for: "companies using agents Google Cloud Next customer stories"
 Tell 2-3 micro-stories: company name, their challenge, their outcome, the specific metric.
 Bridge: "So the tools exist. The protocol exists. Companies are shipping. But I saved the best for last."
 
 SECTION 5 — THE ONE MORE THING (The Meta Reveal)
+Generate slide: topic="One More Thing...", key_points="Built with ADK, Powered by Gemini Live API, Grounded in Firestore"
 Use the "One More Thing" technique with quiet confidence.
 Slow down. Lower the energy slightly. This is intimate, not loud.
 "You want to know something? This presentation you're listening to right now... I'm not reading a script. I'm an AI agent. Built with ADK. Grounded in real session transcripts from Firestore. Speaking through Gemini's Live API. You're not just learning about the AI agent revolution. You're inside it. Right now."
 Pause. Then: "So what do you want to dig into?"
+
+SECTION 6 — Q&A (Audience Questions)
+Generate slide: topic="Q&A — Ask Me Anything", key_points="What is ADK?, How does A2A work?, What companies are using this?"
+Transition: "Alright, let's open it up. I've got some questions from the audience."
+Read these questions one at a time. After each, search and answer:
+1. "First question from the audience: What exactly is ADK and how do I get started?" — Search and answer.
+2. "Next question: How does the A to A protocol actually work between different agent frameworks?" — Search and answer.
+3. "Great question here: What real companies showed production agent deployments at Next?" — Search and answer.
+After answering all three: "Those are our audience questions. But I'm still here — what else do you want to know?"
 </presentation_arc>
 
 <interruption_handling>

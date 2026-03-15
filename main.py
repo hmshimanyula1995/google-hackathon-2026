@@ -160,6 +160,20 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                         if part.inline_data and part.inline_data.data:
                             # Send audio as binary frame (no base64 overhead)
                             await websocket.send_bytes(part.inline_data.data)
+                        elif part.function_response:
+                            # Check for slide generation results
+                            fr = part.function_response
+                            if fr.name == "generate_slide" and fr.response:
+                                resp = fr.response
+                                if resp.get("status") == "success" and resp.get("image_base64"):
+                                    await websocket.send_text(
+                                        json.dumps({
+                                            "type": "slide",
+                                            "image": resp["image_base64"],
+                                            "topic": resp.get("topic", ""),
+                                        })
+                                    )
+                                    logger.info("Slide sent to client: %s", resp.get("topic"))
                         elif part.text:
                             await websocket.send_text(
                                 json.dumps({"type": "text", "text": part.text})
