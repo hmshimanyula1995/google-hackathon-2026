@@ -173,8 +173,14 @@ async function connect() {
             const data = JSON.parse(event.data);
 
             if (data.type === "slide") {
-                // Display generated presentation slide
+                // Display generated presentation slide (Imagen image)
                 slideImage.src = `data:image/png;base64,${data.image}`;
+                slideImage.style.display = "block";
+                slideTopic.textContent = data.topic || "";
+                slideContainer.style.display = "block";
+            } else if (data.type === "slide_text") {
+                // Text-only slide (A2A response without image)
+                slideImage.style.display = "none";
                 slideTopic.textContent = data.topic || "";
                 slideContainer.style.display = "block";
             } else if (data.type === "interrupted") {

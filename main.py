@@ -161,11 +161,12 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                             # Send audio as binary frame (no base64 overhead)
                             await websocket.send_bytes(part.inline_data.data)
                         elif part.function_response:
-                            # Check for slide generation results
+                            # Check for slide-related tool responses
                             fr = part.function_response
-                            if fr.name == "generate_slide" and fr.response:
+                            if fr.name in ("generate_slide", "next_slide", "create_slide") and fr.response:
                                 resp = fr.response
-                                if resp.get("status") == "success" and resp.get("image_base64"):
+                                # Direct Imagen response (has image_base64)
+                                if resp.get("image_base64"):
                                     await websocket.send_text(
                                         json.dumps({
                                             "type": "slide",
@@ -174,6 +175,16 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                                         })
                                     )
                                     logger.info("Slide sent to client: %s", resp.get("topic"))
+                                # A2A response (has slide_description but no image)
+                                elif resp.get("slide_description"):
+                                    await websocket.send_text(
+                                        json.dumps({
+                                            "type": "slide_text",
+                                            "topic": resp.get("topic", ""),
+                                            "description": resp.get("slide_description", ""),
+                                        })
+                                    )
+                                    logger.info("Slide description sent: %s", resp.get("topic"))
                         elif part.text:
                             await websocket.send_text(
                                 json.dumps({"type": "text", "text": part.text})
