@@ -153,7 +153,10 @@ async function connect() {
         landingPage.style.display = "none";
         sessionPage.style.display = "flex";
 
-        addMessage("Session live. Alex is preparing the keynote...", "system");
+        addMessage("Session live. Alex is starting the keynote...", "system");
+
+        // Auto-trigger presentation — Alex starts immediately, no "hey" needed
+        ws.send(JSON.stringify({ text: "Start the presentation" }));
     };
 
     ws.onmessage = (event) => {
