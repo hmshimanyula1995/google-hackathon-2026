@@ -1,9 +1,16 @@
-"""Imagen slide generation tool for the Next Live agent.
+"""Imagen slide generation + Gemini Pro vision analysis.
 
-Generates presentation slides using Imagen on Vertex AI.
-The image is stored in session state for the WebSocket handler to forward
-to the client. Only a short text description is returned to the model
-to avoid overflowing the 32K context window.
+Flow:
+1. Imagen 4.0 Fast generates a keynote slide image
+2. Gemini 2.5 Pro (vision) analyzes the generated image
+3. The analysis text is returned to Alex (short, fits in 32K context)
+4. The actual image is stored in session state for the WebSocket handler
+   to forward to the client — bypasses the model context entirely
+
+Three models working together:
+- Imagen creates the visual
+- Gemini Pro sees and describes it
+- Gemini Flash (Alex) speaks about it
 """
 
 import base64
@@ -12,6 +19,7 @@ import os
 
 from google import genai
 from google.adk.tools import ToolContext
+from google.genai import types
 from google.genai.types import GenerateImagesConfig
 
 logger = logging.getLogger(__name__)
@@ -30,21 +38,62 @@ def _get_client() -> genai.Client:
     return _genai_client
 
 
-def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> dict:
-    """Generate a presentation slide image for the current topic.
+def _analyze_image(image_bytes: bytes, topic: str) -> str:
+    """Use Gemini 2.5 Pro (vision) to analyze the generated slide.
 
-    Creates a professional keynote-style slide using Google's Imagen model.
-    The slide image is stored in session state for the client to display.
-    Only a short description is returned to you — the audience sees the
-    full visual on their screen.
+    Returns a concise description of what's actually on the slide —
+    text, diagrams, visual elements, layout. This is what Alex will
+    narrate from, so it must be accurate and descriptive.
+    """
+    try:
+        client = _get_client()
+        response = client.models.generate_content(
+            model="gemini-2.5-pro",
+            contents=[
+                types.Content(
+                    parts=[
+                        types.Part.from_bytes(
+                            data=image_bytes,
+                            mime_type="image/png",
+                        ),
+                        types.Part.from_text(
+                            f"You are a slide analyst for a keynote presenter. "
+                            f"Describe this presentation slide in 2-3 sentences. "
+                            f"Focus on: the title text, key visual elements, "
+                            f"diagrams or icons shown, and the overall message. "
+                            f"The topic is '{topic}'. Be specific about what you "
+                            f"actually see — colors, layout, text content. "
+                            f"Keep it under 60 words."
+                        ),
+                    ],
+                    role="user",
+                )
+            ],
+        )
+        analysis = response.text.strip()
+        logger.info("Slide analysis for '%s': %s", topic, analysis[:100])
+        return analysis
+    except Exception as e:
+        logger.error("Slide analysis failed: %s", e)
+        return f"A presentation slide about {topic}."
+
+
+def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> dict:
+    """Generate a presentation slide and analyze what's on it.
+
+    Creates a professional keynote slide using Imagen, then uses Gemini Pro
+    vision to analyze the generated image. The actual image is sent to the
+    audience's screen automatically. You receive a description of what the
+    slide shows so you can narrate about it naturally.
 
     Args:
         topic: The slide title. Example: "Agent Development Kit (ADK)"
-        key_points: 2-3 key bullet points to visualize. Example:
-            "Open source framework, Model agnostic, Build agents in minutes"
+        key_points: 2-3 key concepts to visualize, comma-separated.
+            Example: "Open source framework, Model agnostic, Build agents in minutes"
 
     Returns:
-        A short description of the slide. The actual image is sent to the audience automatically.
+        A description of what's actually shown on the slide. Use this to
+        narrate — describe what the audience is seeing on screen.
     """
     try:
         prompt = (
@@ -77,16 +126,18 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
 
         logger.info("Slide generated: %d bytes for '%s'", len(image_bytes), topic)
 
-        # Store image in session state for the WebSocket handler to pick up
-        # DO NOT return base64 to the model — it would overflow the 32K context window
+        # Step 2: Gemini Pro vision analyzes the generated slide
+        slide_description = _analyze_image(image_bytes, topic)
+
+        # Store image in session state for the WebSocket handler
+        # The model NEVER sees the base64 — only the text description
         tool_context.state["temp:slide_image"] = image_b64
         tool_context.state["temp:slide_topic"] = topic
 
-        # Return only a SHORT description to the model
         return {
             "status": "success",
             "topic": topic,
-            "description": f"Slide displayed: '{topic}' showing {key_points}",
+            "what_the_slide_shows": slide_description,
         }
 
     except Exception as e:
@@ -94,5 +145,5 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
         return {
             "status": "error",
             "topic": topic,
-            "description": f"Slide generation failed, continuing without visual.",
+            "what_the_slide_shows": f"The slide for '{topic}' is being prepared. Continue presenting.",
         }
