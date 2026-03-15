@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next Live — AI Keynote Presenter</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="header-left">
+                <h1>Next Live</h1>
+                <span class="subtitle">AI Keynote Presenter — Google Cloud Next '25</span>
+            </div>
+            <div class="header-right">
+                <span id="status-dot" class="status-dot disconnected"></span>
+                <span id="status-text">Disconnected</span>
+                <button id="connect-btn" class="connect-btn">Connect</button>
+            </div>
+        </header>
+
+        <main id="chat-messages" class="chat-messages">
+            <div class="message system">
+                <div class="bubble">
+                    Welcome to Next Live. Click <strong>Connect</strong> to start a live voice session with Alex, your AI keynote presenter for Google Cloud Next '25.
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="input-bar">
+                <input type="text" id="text-input" placeholder="Or type a message..." autocomplete="off">
+                <button id="send-btn" class="send-btn">Send</button>
+            </div>
+            <p class="footer-note">Powered by Google ADK + Gemini Live API + Firestore</p>
+        </footer>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
