@@ -39,9 +39,9 @@ The meta-story: an AI agent built with ADK explains the ADK ecosystem announced 
 | Component | Technology |
 |---|---|
 | Runtime | Python 3.13 |
-| Agent framework | Google ADK (`google-adk >= 1.26.0`) |
-| Voice model | `gemini-2.5-flash-native-audio-preview-12-2025` |
-| Sub-agent model | `gemini-2.5-flash` |
+| Agent framework | Google ADK (`google-adk >= 1.27.0`) |
+| Voice model (root) | `gemini-live-2.5-flash-native-audio` (GA, Vertex AI) |
+| Vision model | `gemini-2.5-pro` (GA) |
 | Voice streaming | Gemini Live API — `StreamingMode.BIDI` |
 | Embeddings | `text-embedding-005` (768-dim) via Vertex AI |
 | Vector DB | Google Cloud Firestore (`session_chunks` collection) |

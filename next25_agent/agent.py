@@ -3,10 +3,15 @@
 Optimized for voice latency: 1 LLM call per turn (down from 4).
 Based on patterns from google/adk-samples (bidi-demo, customer-service, realtime-conversational-agent).
 
+Model Selection (production-grade, GA models):
+- Root agent (Alex):  gemini-live-2.5-flash-native-audio (GA) — only live native audio model available
+- Vision agent:       gemini-2.5-pro (GA) — best quality for image analysis, not latency-critical
+- Embeddings:         text-embedding-005 (GA) — 768-dim, used in search_tool.py
+
 Architecture:
 - root_agent (Alex) — single LLM with direct FunctionTool for search
 - vision_agent — AgentTool, only invoked when user shares an image
-- Context tracking via before_agent_callback (no LLM overhead)
+- Context tracking via before/after_agent_callback (no LLM overhead)
 - Presentation formatting handled by root_agent directly (no PresenterAgent)
 """
 
@@ -143,9 +148,11 @@ def after_agent_callback(
 # Vision Agent — kept as AgentTool (needs multimodal processing)
 # ---------------------------------------------------------------------------
 
+# Pro tier for best visual reasoning quality — this path isn't latency-critical
+# since vision is only triggered on explicit image uploads, not every turn
 vision_agent = LlmAgent(
     name="vision_agent",
-    model="gemini-2.5-flash",
+    model="gemini-2.5-pro",
     description=(
         "Analyzes images shared by the user — typically slides or screenshots "
         "from Next '25 sessions. Extracts text, identifies diagrams, searches "
