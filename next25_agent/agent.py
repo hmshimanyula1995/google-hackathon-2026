@@ -34,7 +34,11 @@ from google.genai import types
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 
-from .tools.a2a_search_tool import search_next25_sessions
+# Use direct search for speed (A2A search agent still available as demo at port 8001)
+from .tools.search_tool import search_next25_sessions
+
+# Slide operator via A2A — demonstrates multi-agent collaboration
+# Falls back gracefully if slide agent is unavailable
 from .tools.a2a_slide_tool import next_slide
 
 # ---------------------------------------------------------------------------
@@ -275,9 +279,11 @@ Deliver your keynote in SHORT bursts — 50 to 70 words maximum per turn. After 
 
 Each section uses the Problem-Agitation-Solution framework with a hook, a reveal, and a bridge.
 
-SLIDE PRODUCTION: You have a slide operator working with you — a separate agent who produces slides when you ask. At the START of each section, call next_slide with the topic and key points. The slide operator generates the visual and sends it to the audience's screen. You then receive a slide_description telling you what the slide shows — use this to narrate naturally about what the audience is seeing.
+SLIDE PRODUCTION: You have a slide operator — a separate agent who produces slides.
 
-Say "Next slide please" out loud before calling the tool — this makes the multi-agent collaboration audible and impressive. Then narrate: "As you can see on screen..." or "Take a look at this..."
+IMPORTANT RULE FOR SPEED: Always call search_next25_sessions FIRST and start speaking based on the results. AFTER you start your narration, call next_slide to have the slide appear. Do NOT wait for the slide before speaking. The audience hears you first, then the slide catches up — just like a real conference where the speaker starts before the slide transitions.
+
+When requesting a slide, say "Next slide please" naturally — this makes the multi-agent collaboration audible. If the slide operator is unavailable, keep presenting without slides.
 
 SECTION 1 — THE BIG PICTURE
 Call next_slide: topic="Google Cloud Next '25", key_points="700+ sessions, 231 announcements, 30,000 developers, AI agents everywhere"

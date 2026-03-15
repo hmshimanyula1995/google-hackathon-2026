@@ -24,7 +24,8 @@ _client: httpx.Client | None = None
 def _get_client() -> httpx.Client:
     global _client
     if _client is None:
-        _client = httpx.Client(timeout=30.0)
+        # Short timeout — if slide agent is slow, Alex keeps presenting
+        _client = httpx.Client(timeout=15.0)
     return _client
 
 
