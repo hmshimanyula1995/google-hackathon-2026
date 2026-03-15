@@ -4,36 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Next Live — AI Keynote Presenter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="app">
-        <header>
-            <div class="header-left">
-                <h1>Next Live</h1>
-                <span class="subtitle">AI Keynote Presenter — Google Cloud Next '25</span>
-            </div>
-            <div class="header-right">
-                <span id="status-dot" class="status-dot disconnected"></span>
-                <span id="status-text">Disconnected</span>
-                <button id="connect-btn" class="connect-btn">Connect</button>
-            </div>
-        </header>
 
-        <main id="chat-messages" class="chat-messages">
-            <div class="message system">
-                <div class="bubble">
-                    Welcome to Next Live. Click <strong>Connect</strong> to start a live voice session with Alex, your AI keynote presenter for Google Cloud Next '25.
+    <!-- LANDING PAGE -->
+    <div id="landing-page" class="landing">
+        <div class="landing-card">
+            <div class="landing-badge">Live Session</div>
+
+            <div class="landing-logo">
+                <svg width="32" height="26" viewBox="0 0 24 20" fill="none">
+                    <path d="M12 1.5C6.48 1.5 2 5.48 2 10.5c0 2.24.84 4.29 2.22 5.88L3 19.5l3.12-1.22A9.94 9.94 0 0012 19.5c5.52 0 10-3.98 10-9S17.52 1.5 12 1.5z" fill="#4285F4"/>
+                    <path d="M8.5 8.5h7M8.5 11.5h5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Next Live</span>
+            </div>
+
+            <h1 class="landing-title">Google Cloud Next '25</h1>
+            <h2 class="landing-subtitle">AI Keynote Presentation</h2>
+
+            <p class="landing-description">
+                Join a live voice session with <strong>Alex</strong>, your AI keynote presenter.
+                Alex will walk you through the biggest AI agent announcements from
+                Google Cloud Next '25 — powered by ADK, Gemini Live API, and Firestore RAG.
+            </p>
+
+            <div class="landing-features">
+                <div class="feature">
+                    <span class="feature-icon">🎙️</span>
+                    <span>Live voice interaction</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">⚡</span>
+                    <span>Interrupt anytime</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🔍</span>
+                    <span>Grounded in real transcripts</span>
                 </div>
             </div>
-        </main>
 
-        <footer>
-            <div class="input-bar">
-                <input type="text" id="text-input" placeholder="Or type a message..." autocomplete="off">
-                <button id="send-btn" class="send-btn">Send</button>
+            <button id="join-btn" class="join-btn">
+                Join Live Session
+            </button>
+
+            <p class="landing-note">Requires microphone access. Best experienced with headphones.</p>
+        </div>
+
+        <footer class="landing-footer">
+            Built with Google ADK · Gemini Live API · Firestore · Cloud Run
+        </footer>
+    </div>
+
+    <!-- SESSION PAGE -->
+    <div id="session-page" class="session" style="display:none;">
+        <header class="session-header">
+            <div class="session-header-left">
+                <span class="session-logo">Next Live</span>
+                <div class="session-status">
+                    <span id="status-dot" class="status-dot disconnected"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
             </div>
-            <p class="footer-note">Powered by Google ADK + Gemini Live API + Firestore</p>
+            <button id="disconnect-btn" class="disconnect-btn">End Session</button>
+        </header>
+
+        <main id="chat-messages" class="chat-messages"></main>
+
+        <footer class="session-footer">
+            <p>Powered by Google ADK · Gemini Live API · Firestore Vector Search</p>
         </footer>
     </div>
 

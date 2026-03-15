@@ -14,12 +14,13 @@ let isConnected = false;
 let sessionId = null;
 
 // DOM elements
-const connectBtn = document.getElementById("connect-btn");
+const landingPage = document.getElementById("landing-page");
+const sessionPage = document.getElementById("session-page");
+const joinBtn = document.getElementById("join-btn");
+const disconnectBtn = document.getElementById("disconnect-btn");
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 const chatMessages = document.getElementById("chat-messages");
-const textInput = document.getElementById("text-input");
-const sendBtn = document.getElementById("send-btn");
 
 // --- Audio Player (24kHz output from Gemini) ---
 
@@ -29,18 +30,6 @@ async function startAudioPlayer() {
     await audioPlayerContext.audioWorklet.addModule(workletUrl);
     audioPlayerNode = new AudioWorkletNode(audioPlayerContext, "pcm-player-processor");
     audioPlayerNode.connect(audioPlayerContext.destination);
-    console.log("Audio player started (24kHz)");
-}
-
-function stopAudioPlayer() {
-    if (audioPlayerNode) {
-        audioPlayerNode.disconnect();
-        audioPlayerNode = null;
-    }
-    if (audioPlayerContext) {
-        audioPlayerContext.close();
-        audioPlayerContext = null;
-    }
 }
 
 function clearAudioBuffer() {
@@ -85,25 +74,20 @@ async function startAudioRecorder() {
 
     source.connect(audioRecorderNode);
     audioRecorderNode.connect(audioRecorderContext.destination);
-    console.log("Audio recorder started (16kHz)");
 }
 
-function stopAudioRecorder() {
-    if (audioRecorderNode) {
-        audioRecorderNode.disconnect();
-        audioRecorderNode = null;
-    }
-    if (audioRecorderContext) {
-        audioRecorderContext.close();
-        audioRecorderContext = null;
-    }
-    if (mediaStream) {
-        mediaStream.getTracks().forEach((track) => track.stop());
-        mediaStream = null;
-    }
+function stopAudio() {
+    if (audioPlayerNode) { audioPlayerNode.disconnect(); audioPlayerNode = null; }
+    if (audioPlayerContext) { audioPlayerContext.close(); audioPlayerContext = null; }
+    if (audioRecorderNode) { audioRecorderNode.disconnect(); audioRecorderNode = null; }
+    if (audioRecorderContext) { audioRecorderContext.close(); audioRecorderContext = null; }
+    if (mediaStream) { mediaStream.getTracks().forEach((t) => t.stop()); mediaStream = null; }
 }
 
-// --- Chat Messages ---
+// --- Chat Messages (deduplication fix) ---
+
+let currentAlexBubble = null;
+let currentUserBubble = null;
 
 function addMessage(text, sender) {
     const div = document.createElement("div");
@@ -120,13 +104,21 @@ function addMessage(text, sender) {
     return bubble;
 }
 
-let currentAlexBubble = null;
-
 function updateAlexTranscript(text) {
     if (!currentAlexBubble) {
         currentAlexBubble = addMessage(text, "alex");
     } else {
         currentAlexBubble.textContent = text;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+function updateUserTranscript(text) {
+    // Update the same bubble instead of creating duplicates
+    if (!currentUserBubble) {
+        currentUserBubble = addMessage(text, "user");
+    } else {
+        currentUserBubble.textContent = text;
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
@@ -138,7 +130,6 @@ async function connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws/${sessionId}`;
 
-    console.log("Connecting to:", wsUrl);
     setStatus("connecting");
 
     try {
@@ -146,7 +137,7 @@ async function connect() {
         await startAudioRecorder();
     } catch (err) {
         console.error("Audio setup failed:", err);
-        addMessage("Microphone access denied. Please allow microphone access and try again.", "system");
+        addMessage("Microphone access denied. Please allow microphone and try again.", "system");
         setStatus("disconnected");
         return;
     }
@@ -155,10 +146,14 @@ async function connect() {
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
-        console.log("WebSocket connected");
         isConnected = true;
         setStatus("connected");
-        addMessage("Connected! Say 'hey' to start the presentation.", "system");
+
+        // Show session page, hide landing
+        landingPage.style.display = "none";
+        sessionPage.style.display = "flex";
+
+        addMessage("Session live. Alex is preparing the keynote...", "system");
     };
 
     ws.onmessage = (event) => {
@@ -169,20 +164,19 @@ async function connect() {
                 audioPlayerNode.port.postMessage(int16Data);
             }
         } else {
-            // JSON event
             const data = JSON.parse(event.data);
 
             if (data.type === "interrupted") {
-                // INSTANT buffer clear — this is the key fix
                 clearAudioBuffer();
-                console.log("Interrupted — audio buffer cleared");
                 currentAlexBubble = null;
             } else if (data.type === "transcript") {
                 updateAlexTranscript(data.text);
             } else if (data.type === "user_transcript") {
-                addMessage(data.text, "user");
+                updateUserTranscript(data.text);
             } else if (data.type === "turn_complete") {
+                // Finalize both bubbles for next turn
                 currentAlexBubble = null;
+                currentUserBubble = null;
             } else if (data.type === "text") {
                 addMessage(data.text, "alex");
             }
@@ -190,66 +184,39 @@ async function connect() {
     };
 
     ws.onclose = () => {
-        console.log("WebSocket closed");
         isConnected = false;
         setStatus("disconnected");
-        stopAudioPlayer();
-        stopAudioRecorder();
+        stopAudio();
     };
 
     ws.onerror = (err) => {
         console.error("WebSocket error:", err);
-        addMessage("Connection error. Try refreshing the page.", "system");
     };
 }
 
 function disconnect() {
-    if (ws) {
-        ws.close();
-        ws = null;
-    }
-    stopAudioPlayer();
-    stopAudioRecorder();
+    if (ws) { ws.close(); ws = null; }
+    stopAudio();
     isConnected = false;
     setStatus("disconnected");
+
+    // Show landing page again
+    sessionPage.style.display = "none";
+    landingPage.style.display = "flex";
+
+    // Clear chat
+    chatMessages.innerHTML = "";
+    currentAlexBubble = null;
+    currentUserBubble = null;
 }
 
 function setStatus(status) {
     statusDot.className = `status-dot ${status}`;
-    const labels = {
-        disconnected: "Disconnected",
-        connecting: "Connecting...",
-        connected: "Live",
-    };
+    const labels = { disconnected: "Disconnected", connecting: "Connecting...", connected: "Live" };
     statusText.textContent = labels[status] || status;
-    connectBtn.textContent = status === "connected" ? "Disconnect" : "Connect";
-}
-
-// --- Text Input ---
-
-function sendText() {
-    const text = textInput.value.trim();
-    if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-
-    ws.send(JSON.stringify({ text: text }));
-    addMessage(text, "user");
-    textInput.value = "";
 }
 
 // --- Event Listeners ---
 
-connectBtn.addEventListener("click", () => {
-    if (isConnected) {
-        disconnect();
-    } else {
-        connect();
-    }
-});
-
-sendBtn.addEventListener("click", sendText);
-
-textInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        sendText();
-    }
-});
+joinBtn.addEventListener("click", connect);
+disconnectBtn.addEventListener("click", disconnect);
