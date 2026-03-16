@@ -27,18 +27,9 @@ itinerary_queues: dict[str, queue.Queue] = {}
 
 
 def _send_itinerary_email(email: str, flight: str, hotel: str):
-    """Send itinerary confirmation email via Resend."""
+    """Send itinerary confirmation email via Gmail SMTP."""
     try:
-        import resend as _resend
-
-        # Init Resend if not already done (reuse invitation_tool's init)
-        if not _resend.api_key:
-            from concierge_tools.invitation_tool import _init_resend
-            _init_resend()
-
-        if not _resend.api_key:
-            logger.warning("[ITINERARY_EMAIL] No Resend API key — skipping")
-            return
+        from concierge_tools.invitation_tool import _send_email_smtp
 
         html = f"""<!DOCTYPE html>
 <html>
@@ -75,7 +66,7 @@ def _send_itinerary_email(email: str, flight: str, hotel: str):
                     </table>
                     <table width="100%" cellpadding="0" cellspacing="0">
                         <tr><td align="center">
-                            <a href="https://next-live-agent-338756532561.us-central1.run.app" style="display:inline-block;padding:14px 40px;background:#34A853;color:#fff;text-decoration:none;border-radius:28px;font-size:16px;font-weight:600;">
+                            <a href="https://next-live-agent-338756532561.us-central1.run.app/keynote" style="display:inline-block;padding:14px 40px;background:#34A853;color:#fff;text-decoration:none;border-radius:28px;font-size:16px;font-weight:600;">
                                 Join the Keynote
                             </a>
                         </td></tr>
@@ -90,27 +81,15 @@ def _send_itinerary_email(email: str, flight: str, hotel: str):
 </body>
 </html>"""
 
-        params = {
-            "from": "Next Live <onboarding@resend.dev>",
-            "to": [email],
-            "subject": "Trip Confirmed — Google Cloud Next 2026 Itinerary",
-            "html": html,
-        }
-
-        try:
-            result = _resend.Emails.send(params)
-            email_id = getattr(result, "id", None) or str(result)
-            logger.info("[ITINERARY_EMAIL] Sent to %s: %s", email, email_id)
-        except Exception as send_err:
-            if "verify a domain" in str(send_err) or "own email" in str(send_err):
-                logger.warning("[ITINERARY_EMAIL] Free tier — retrying with account owner")
-                fallback = "admin@infinityedgetech.com"
-                params["to"] = [fallback]
-                params["subject"] = f"Itinerary for {email} — Google Cloud Next 2026"
-                result = _resend.Emails.send(params)
-                logger.info("[ITINERARY_EMAIL] Fallback sent to %s (for %s)", fallback, email)
-            else:
-                raise
+        sent = _send_email_smtp(
+            to_email=email,
+            subject="Trip Confirmed — Google Cloud Next 2026 Itinerary",
+            html=html,
+        )
+        if sent:
+            logger.info("[ITINERARY_EMAIL] Sent to %s", email)
+        else:
+            logger.warning("[ITINERARY_EMAIL] Skipped for %s — no Gmail password", email)
 
     except Exception as e:
         logger.error("[ITINERARY_EMAIL] Failed for %s: %s", email, e)
