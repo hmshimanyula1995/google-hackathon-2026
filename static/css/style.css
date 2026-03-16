@@ -469,15 +469,22 @@ body {
 }
 
 /* Pulse avatar border when speaking */
-.audio-visualizer.speaking ~ .session-header-info .agent-avatar::after,
-.session-header-left:has(.audio-visualizer.speaking) .agent-avatar::after {
-    border-color: var(--google-blue);
-    animation: avatarPulse 1.5s ease-in-out infinite;
+.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.alex-avatar::after {
+    animation: alexAvatarPulse 1.5s ease-in-out infinite;
 }
 
-@keyframes avatarPulse {
+.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.maya-avatar::after {
+    animation: mayaAvatarPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes alexAvatarPulse {
     0%, 100% { border-color: rgba(66, 133, 244, 0.3); }
     50% { border-color: rgba(66, 133, 244, 0.8); }
+}
+
+@keyframes mayaAvatarPulse {
+    0%, 100% { border-color: rgba(251, 188, 4, 0.3); }
+    50% { border-color: rgba(251, 188, 4, 0.8); }
 }
 
 .session-header-info {
@@ -815,88 +822,114 @@ body {
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 32px;
+    padding: 36px 32px;
     box-shadow: var(--shadow-md);
     position: relative;
+    border-top: none;
 }
 
 .itinerary-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    top: 0; left: 0; right: 0; height: 5px;
+    background: linear-gradient(90deg, var(--google-blue) 0%, var(--google-red) 33%, var(--google-yellow) 66%, var(--google-green) 100%);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
 }
 
 .itinerary-title {
-    font-family: 'Google Sans', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 24px;
     text-align: center;
+    letter-spacing: -0.5px;
 }
 
 .itinerary-section {
     display: flex;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .itinerary-section:last-of-type {
     border-bottom: none;
+    margin-bottom: 16px;
 }
 
 .itinerary-label {
-    font-size: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    min-width: 60px;
-    padding-top: 2px;
+    letter-spacing: 1px;
+    color: var(--google-yellow);
+    flex-shrink: 0;
+    width: 90px;
 }
 
 .itinerary-value {
-    font-size: 14px;
-    color: var(--text);
-    line-height: 1.5;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    color: var(--white);
+    font-weight: 500;
     flex: 1;
+    text-align: right;
 }
+
+
 
 /* Confirm button with green glow pulse */
 .confirm-btn {
     display: block;
     width: 100%;
-    margin-top: 20px;
-    padding: 14px 32px;
-    background: var(--google-green);
+    margin-top: 24px;
+    padding: 16px 32px;
+    background: linear-gradient(90deg, var(--google-green), #66bb6a);
     color: white;
     border: none;
     border-radius: 28px;
-    font-family: 'Google Sans', sans-serif;
-    font-size: 15px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(52, 168, 83, 0.3);
-    animation: itinSlideIn 0.4s ease forwards, greenGlow 2s ease-in-out infinite 0.8s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 16px rgba(52, 168, 83, 0.4);
+    animation: itinSlideIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards, greenGlow 2.5s ease-in-out infinite 0.8s;
     animation-delay: calc(var(--reveal-order, 0) * 100ms);
+    position: relative;
+    overflow: hidden;
+}
+
+.confirm-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+}
+
+.confirm-btn:hover::before {
+    left: 150%;
 }
 
 @keyframes greenGlow {
     0%, 100% {
-        box-shadow: 0 2px 8px rgba(52, 168, 83, 0.3);
+        box-shadow: 0 4px 16px rgba(52, 168, 83, 0.4);
     }
     50% {
-        box-shadow: 0 4px 20px rgba(52, 168, 83, 0.6), 0 0 30px rgba(52, 168, 83, 0.2);
+        box-shadow: 0 6px 24px rgba(52, 168, 83, 0.7), 0 0 30px rgba(52, 168, 83, 0.2);
     }
 }
 
 .confirm-btn:hover {
-    background: #2e7d32;
-    box-shadow: 0 4px 16px rgba(52, 168, 83, 0.4);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(52, 168, 83, 0.6);
+    transform: translateY(-2px);
 }
 
 .confirm-btn:active {

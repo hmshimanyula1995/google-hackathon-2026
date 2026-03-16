@@ -345,9 +345,32 @@ async function connect(agentType) {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}${wsPath}`;
 
+    const agentAvatar = document.getElementById("agent-avatar");
+    
     // Update session page UI for this agent type
     sessionTitle.textContent = agentType === "concierge" ? "Travel Concierge" : "Keynote";
     disconnectBtn.textContent = agentType === "concierge" ? "End Call" : "End Session";
+    
+    if (agentType === "concierge") {
+        agentAvatar.className = "agent-avatar maya-avatar";
+        agentAvatar.innerHTML = `
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="18" r="17" fill="var(--google-yellow)" opacity="0.1" stroke="var(--google-yellow)" stroke-width="1"/>
+                <circle cx="18" cy="18" r="12" fill="var(--google-yellow)" opacity="0.2"/>
+                <path d="M18 10l2.5 5.5L26 18l-5.5 2.5L18 26l-2.5-5.5L10 18l5.5-2.5z" fill="var(--google-yellow)"/>
+            </svg>
+        `;
+    } else {
+        agentAvatar.className = "agent-avatar alex-avatar";
+        agentAvatar.innerHTML = `
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="18" r="17" fill="var(--google-blue)" opacity="0.1" stroke="var(--google-blue)" stroke-width="1"/>
+                <circle cx="18" cy="18" r="12" fill="var(--google-blue)" opacity="0.15"/>
+                <path d="M18 11c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 2.5c1.24 0 2.25 1.01 2.25 2.25S19.24 18 18 18s-2.25-1.01-2.25-2.25S16.76 13.5 18 13.5zm0 9.5c-1.85 0-3.47-.93-4.44-2.35.02-1.47 2.96-2.28 4.44-2.28s4.42.81 4.44 2.28C21.47 22.07 19.85 23 18 23z" fill="var(--google-blue)"/>
+            </svg>
+        `;
+    }
+    
     slideContainer.style.display = "none";
     itineraryContainer.style.display = "none";
     itineraryContainer.classList.remove("revealed");
