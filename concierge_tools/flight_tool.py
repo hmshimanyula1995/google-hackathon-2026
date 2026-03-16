@@ -6,16 +6,11 @@ endpoint is on the SAME server, so sync HTTP would deadlock).
 
 import logging
 import os
-import time
 import uuid
 
 import httpx
 
 logger = logging.getLogger(__name__)
-
-# Code-level cache to prevent repeated tool calls (model ignores instruction guards)
-_flight_cache: dict[str, tuple[float, dict]] = {}
-_CACHE_TTL = 120  # seconds
 
 
 def _extract_response_text(result: dict) -> str:
@@ -53,14 +48,6 @@ async def search_flights(origin: str, preferences: str) -> dict:
     Returns:
         Dictionary with flight search results from the A2A agent.
     """
-    # Check cache — prevent model from calling same search repeatedly
-    cache_key = origin.lower().strip()
-    if cache_key in _flight_cache:
-        cached_time, cached_result = _flight_cache[cache_key]
-        if time.time() - cached_time < _CACHE_TTL:
-            logger.info("[A2A_FLIGHT_TOOL] Returning cached result for '%s'", origin)
-            return cached_result
-
     port = os.environ.get("PORT", "8000")
     url = f"http://localhost:{port}/a2a/flight/"
 
@@ -96,13 +83,11 @@ async def search_flights(origin: str, preferences: str) -> dict:
         if "result" in result:
             response_text = _extract_response_text(result)
             logger.info("[A2A_FLIGHT_TOOL] Response: %d chars", len(response_text))
-            tool_result = {
+            return {
                 "status": "success",
                 "response": response_text,
                 "source": "a2a_flight_agent",
             }
-            _flight_cache[cache_key] = (time.time(), tool_result)
-            return tool_result
 
         if "error" in result:
             error = result["error"]
