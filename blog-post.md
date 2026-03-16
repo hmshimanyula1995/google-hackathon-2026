@@ -91,7 +91,7 @@ This is the meta-story: **Alex is an AI agent, built with ADK, explaining the AI
 
 ```
 Stage 1: INVITATION (REST API)
-  Browser → POST /api/invitation → Imagen 4.0 → Email via Resend
+  Browser → POST /api/invitation → Imagen 4.0 → Email via Gmail
 
 Stage 2: TRAVEL BOOKING (Gemini Live API, real-time voice)
   Browser ←→ WebSocket → ConciergeAgent "Maya"
@@ -141,7 +141,7 @@ Instead of using additional LLM calls to track conversation context, we use **Py
 | **Vertex AI Embeddings** | `text-embedding-005` for embedding search queries and document chunks |
 | **Vertex AI Imagen** | `imagen-4.0-fast-generate-001` for invitation cards and keynote slides |
 | **Cloud Build** | CI/CD pipeline — automated container builds and deployment |
-| **Secret Manager** | Secure storage for the Resend API key, accessed by Cloud Run service account |
+| **Secret Manager** | Gmail app password stored securely, accessed by Cloud Run service account |
 
 ---
 
