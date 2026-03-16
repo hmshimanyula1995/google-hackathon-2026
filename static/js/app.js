@@ -426,6 +426,14 @@ async function connect(agentType) {
             if (audioPlayerNode) {
                 audioPlayerNode.port.postMessage(int16Data);
             }
+            
+            // Remove thinking indicators
+            if (toolActivityText.textContent === "Thinking...") {
+                hideToolActivity();
+            }
+            const agentAvatar = document.getElementById("agent-avatar");
+            if (agentAvatar) agentAvatar.classList.remove("thinking");
+            
             // Show audio visualizer — reset timer on each audio chunk
             setSpeaking(true);
             lastAudioTime = Date.now();
@@ -470,24 +478,38 @@ async function connect(agentType) {
                 hideTypingIndicator();
                 updateAlexTranscript(data.text);
 
+                if (toolActivityText.textContent === "Thinking...") {
+                    hideToolActivity();
+                }
+                const agentAvatar = document.getElementById("agent-avatar");
+                if (agentAvatar) agentAvatar.classList.remove("thinking");
+
                 // Check if agent mentions searching — show indicator
-                // Don't hide tool activity on transcript (it stays until turn_complete
-                // or a new transcript that clearly has results)
                 if (!toolActivity.style.display || toolActivity.style.display === "none") {
                     checkToolActivity(data.text);
                 }
             } else if (data.type === "user_transcript") {
                 updateUserTranscript(data.text);
+                if (!toolActivity.style.display || toolActivity.style.display === "none") {
+                    showToolActivity("Thinking...");
+                }
+                const agentAvatar = document.getElementById("agent-avatar");
+                if (agentAvatar) agentAvatar.classList.add("thinking");
             } else if (data.type === "turn_complete") {
                 currentAlexBubble = null;
                 currentUserBubble = null;
                 setSpeaking(false);
                 hideToolActivity();
-                showTypingIndicator();
+                const agentAvatar = document.getElementById("agent-avatar");
+                if (agentAvatar) agentAvatar.classList.remove("thinking");
             } else if (data.type === "text") {
                 hideTypingIndicator();
                 addMessage(data.text, "alex");
-                hideToolActivity();
+                if (toolActivityText.textContent === "Thinking...") {
+                    hideToolActivity();
+                }
+                const agentAvatar = document.getElementById("agent-avatar");
+                if (agentAvatar) agentAvatar.classList.remove("thinking");
                 checkToolActivity(data.text);
             }
         }
@@ -520,6 +542,9 @@ function disconnect() {
     setSpeaking(false);
     hideToolActivity();
     hideTypingIndicator();
+    
+    const agentAvatar = document.getElementById("agent-avatar");
+    if (agentAvatar) agentAvatar.classList.remove("thinking");
 
     if (activeAgent === "concierge") {
         setStage("invitation");

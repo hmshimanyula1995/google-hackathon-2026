@@ -465,12 +465,14 @@ body {
     transition: border-color 0.3s;
 }
 
-/* Pulse avatar border when speaking */
-.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.alex-avatar::after {
+/* Pulse avatar border when speaking or thinking */
+.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.alex-avatar::after,
+.agent-avatar.alex-avatar.thinking::after {
     animation: alexAvatarPulse 1.5s ease-in-out infinite;
 }
 
-.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.maya-avatar::after {
+.session-header-left:has(.audio-visualizer.speaking) .agent-avatar.maya-avatar::after,
+.agent-avatar.maya-avatar.thinking::after {
     animation: mayaAvatarPulse 1.5s ease-in-out infinite;
 }
 
