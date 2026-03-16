@@ -96,7 +96,7 @@ Stage 3: KEYNOTE (Gemini Live API, BIDI voice)
 | Agent | Model | Role | Tools |
 |-------|-------|------|-------|
 | **Alex** (root) | `gemini-live-2.5-flash-native-audio` | Keynote presenter — 12 rhetorical techniques, 6-section arc, interruptible Q&A | `search_next25_sessions`, `generate_slide` |
-| **Maya** (concierge) | `gemini-live-2.5-flash-native-audio` | Travel concierge — warm persona, books flights + hotels via voice | `search_flights`, `search_hotels`, `confirm_booking` |
+| **Maya** (concierge) | `gemini-live-2.5-flash-native-audio` | Travel concierge — warm persona, books flights + hotels via voice, analyzes shared images | `search_flights`, `search_hotels`, `confirm_booking` + vision (image input) |
 | **HotelAgent** | `gemini-2.5-flash` | A2A hotel search — finds real hotels near Las Vegas Convention Center | `google_search` (grounding) |
 | **FlightAgent** | `gemini-2.5-flash` | A2A flight search — finds real flights from user's city to LAS | `google_search` (grounding) |
 | **InvitationTool** | `imagen-4.0-fast-generate-001` | Generates premium invitation cards (not an LLM agent — direct API) | Imagen API |
@@ -139,7 +139,7 @@ Each A2A agent exposes a standard agent card at `/.well-known/agent-card.json` f
 | Criterion | How We Score |
 |-----------|-------------|
 | **Breaks text-box paradigm** | Entire experience is voice-first. Users speak naturally to Maya and Alex. No typing required for the core journey. |
-| **See, Hear, Speak seamlessly** | **Hear:** Gemini Live API processes real-time audio input with automatic VAD. **Speak:** Native audio output (not TTS) with distinct voices (Aoede for Maya, Kore for Alex). **See:** Imagen generates invitation cards and keynote slides in real-time. Itinerary cards render live. |
+| **See, Hear, Speak seamlessly** | **Hear:** Gemini Live API processes real-time audio input with automatic VAD. **Speak:** Native audio output (not TTS) with distinct voices (Aoede for Maya, Kore for Alex). **See (input):** Maya accepts image uploads — users share hotel/flight photos and Maya analyzes them visually. **See (output):** Imagen generates invitation cards and keynote slides in real-time. |
 | **Distinct persona/voice** | Maya is a warm travel concierge (Aoede voice, 40-60 words/turn). Alex is a world-class keynote presenter (Kore voice, 50-70 words/turn, 12 rhetorical techniques). |
 | **Handles interruptions naturally** | VAD with `prefix_padding_ms=0` and `start_of_speech_sensitivity=HIGH`. Audio buffer instant-clear on interruption. Alex gracefully pivots: "Great thought — let me land this point." |
 | **Context-aware, not disjointed** | Python callbacks track topics across turns (zero LLM cost). Bridge suggestions connect related topics: "You've asked about ADK and A2A — want me to show how they work together?" |
