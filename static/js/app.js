@@ -366,6 +366,12 @@ async function connect(agentType) {
         return;
     }
 
+    // Remove existing close handler to prevent race conditions during stage transition
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+    }
+
     ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
 
@@ -479,7 +485,11 @@ async function connect(agentType) {
 }
 
 function disconnect() {
-    if (ws) { ws.close(); ws = null; }
+    if (ws) {
+        ws.onclose = null; // Prevent race conditions
+        ws.close();
+        ws = null;
+    }
     stopAudio();
     isConnected = false;
     setStatus("disconnected");
@@ -574,7 +584,11 @@ conciergeBtn.addEventListener("click", () => {
 // Stage 3: Concierge → Keynote
 confirmKeynoteBtn.addEventListener("click", () => {
     // Full clean teardown — connect() will get fresh mic permission
-    if (ws) { ws.close(); ws = null; }
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
     stopAudio();
     isConnected = false;
     clearChat();
