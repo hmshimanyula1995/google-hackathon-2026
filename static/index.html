@@ -11,8 +11,8 @@
 </head>
 <body>
 
-    <!-- LANDING PAGE -->
-    <div id="landing-page" class="landing">
+    <!-- LANDING PAGE (Stage 1 entry) -->
+    <div id="landing-page" class="landing page">
         <div class="landing-card">
             <div class="landing-badge">Live Session</div>
 
@@ -24,56 +24,168 @@
                 <span>Next Live</span>
             </div>
 
-            <h1 class="landing-title">Google Cloud Next '25</h1>
-            <h2 class="landing-subtitle">AI Keynote Presentation</h2>
+            <h1 class="landing-title">Google Cloud Next '26</h1>
+            <h2 class="landing-subtitle">Your Journey Starts Here</h2>
 
             <p class="landing-description">
-                Join a live voice session with <strong>Alex</strong>, your AI keynote presenter.
-                Alex will walk you through the biggest AI agent announcements from
-                Google Cloud Next '25 — powered by ADK, Gemini Live API, and Firestore RAG.
+                Get your personal invitation to <strong>Google Cloud Next 2026</strong>,
+                book your trip with our AI travel concierge, and then join
+                <strong>Alex</strong> for an interactive keynote replaying the highlights
+                from Next '25 — all powered by ADK, Gemini Live API, and Firestore RAG.
             </p>
 
             <div class="landing-features">
                 <div class="feature">
-                    <span class="feature-icon">🎙️</span>
-                    <span>Live voice interaction</span>
+                    <span class="feature-icon">&#x2709;</span>
+                    <span>Personal invitation</span>
                 </div>
                 <div class="feature">
-                    <span class="feature-icon">⚡</span>
-                    <span>Interrupt anytime</span>
+                    <span class="feature-icon">&#x2708;</span>
+                    <span>AI travel concierge</span>
                 </div>
                 <div class="feature">
-                    <span class="feature-icon">🔍</span>
-                    <span>Grounded in real transcripts</span>
+                    <span class="feature-icon">&#x1F3A4;</span>
+                    <span>Live keynote with Alex</span>
                 </div>
             </div>
 
+            <div class="email-input-group">
+                <input id="email-input" type="email" class="email-input" placeholder="Enter your email address" autocomplete="email" />
+            </div>
+
             <button id="join-btn" class="join-btn">
-                Join Live Session
+                Get Your Invitation
             </button>
 
-            <p class="landing-note">Requires microphone access. Best experienced with headphones.</p>
+            <p class="landing-note">We'll send a real invitation to your inbox. Requires microphone for voice stages.</p>
         </div>
 
         <footer class="landing-footer">
-            Built with Google ADK · Gemini Live API · Firestore · Cloud Run
+            Built with Google ADK &middot; Gemini Live API &middot; Firestore &middot; Imagen &middot; Cloud Run
         </footer>
     </div>
 
-    <!-- SESSION PAGE -->
-    <div id="session-page" class="session" style="display:none;">
+    <!-- INVITATION PAGE (Stage 1 result) -->
+    <div id="invitation-page" class="invitation page" style="display:none;">
+        <div class="landing-card invitation-card">
+            <div class="landing-badge invitation-badge">You're Invited</div>
+
+            <div class="landing-logo">
+                <svg width="32" height="26" viewBox="0 0 24 20" fill="none">
+                    <path d="M12 1.5C6.48 1.5 2 5.48 2 10.5c0 2.24.84 4.29 2.22 5.88L3 19.5l3.12-1.22A9.94 9.94 0 0012 19.5c5.52 0 10-3.98 10-9S17.52 1.5 12 1.5z" fill="#4285F4"/>
+                    <path d="M8.5 8.5h7M8.5 11.5h5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Next Live</span>
+            </div>
+
+            <!-- Loading state -->
+            <div id="invitation-loading" class="invitation-loading">
+                <div class="google-spinner">
+                    <svg class="google-spinner-svg" viewBox="0 0 66 66">
+                        <circle class="google-spinner-circle google-spinner-blue" cx="33" cy="33" r="28" fill="none" stroke-width="5" stroke-dasharray="40 130" stroke-dashoffset="0"/>
+                        <circle class="google-spinner-circle google-spinner-red" cx="33" cy="33" r="28" fill="none" stroke-width="5" stroke-dasharray="40 130" stroke-dashoffset="-43"/>
+                        <circle class="google-spinner-circle google-spinner-yellow" cx="33" cy="33" r="28" fill="none" stroke-width="5" stroke-dasharray="40 130" stroke-dashoffset="-86"/>
+                        <circle class="google-spinner-circle google-spinner-green" cx="33" cy="33" r="28" fill="none" stroke-width="5" stroke-dasharray="40 130" stroke-dashoffset="-129"/>
+                    </svg>
+                </div>
+                <p>Generating your personal invitation...</p>
+                <!-- Shimmer skeleton placeholder -->
+                <div class="invitation-shimmer"></div>
+            </div>
+
+            <!-- Invitation card image (hidden until loaded) -->
+            <div id="invitation-result" class="invitation-result-hidden" style="display:none;">
+                <img id="invitation-image" class="invitation-image" alt="Google Cloud Next 2026 Invitation">
+                <p id="invitation-sent" class="invitation-sent"></p>
+                <button id="concierge-btn" class="join-btn concierge-btn">
+                    Call Travel Concierge
+                </button>
+                <p class="landing-note">Maya will help you book flights and hotels via voice.</p>
+            </div>
+        </div>
+
+        <footer class="landing-footer">
+            Built with Google ADK &middot; Gemini Live API &middot; Firestore &middot; Imagen &middot; Cloud Run
+        </footer>
+    </div>
+
+    <!-- SESSION PAGE (reused for both Concierge and Keynote) -->
+    <div id="session-page" class="session page" style="display:none;">
+        <!-- Animated SVG wave background -->
+        <svg class="session-bg-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+            <path class="wave wave1" d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,120 L0,120 Z"/>
+            <path class="wave wave2" d="M0,60 C240,20 480,80 720,50 C960,20 1200,70 1440,50 L1440,120 L0,120 Z"/>
+            <path class="wave wave3" d="M0,70 C180,90 480,40 720,70 C960,100 1260,50 1440,65 L1440,120 L0,120 Z"/>
+        </svg>
+
         <header class="session-header">
             <div class="session-header-left">
-                <span class="session-logo">Next Live</span>
-                <div class="session-status">
-                    <span id="status-dot" class="status-dot disconnected"></span>
-                    <span id="status-text">Disconnected</span>
+                <!-- Agent avatar SVG -->
+                <div id="agent-avatar" class="agent-avatar">
+                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                        <circle cx="18" cy="18" r="17" fill="#4285F4" opacity="0.1" stroke="#4285F4" stroke-width="1"/>
+                        <circle cx="18" cy="18" r="12" fill="#4285F4" opacity="0.15"/>
+                        <path d="M18 11c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7zm0 2.5c1.24 0 2.25 1.01 2.25 2.25S19.24 18 18 18s-2.25-1.01-2.25-2.25S16.76 13.5 18 13.5zm0 9.5c-1.85 0-3.47-.93-4.44-2.35.02-1.47 2.96-2.28 4.44-2.28s4.42.81 4.44 2.28C21.47 22.07 19.85 23 18 23z" fill="#4285F4"/>
+                    </svg>
+                </div>
+                <div class="session-header-info">
+                    <span id="session-title" class="session-logo">Next Live</span>
+                    <div class="session-status">
+                        <span id="status-dot" class="status-dot disconnected"></span>
+                        <span id="status-text">Disconnected</span>
+                    </div>
+                </div>
+                <!-- Audio Visualizer -->
+                <div id="audio-visualizer" class="audio-visualizer">
+                    <div class="audio-bars">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </div>
                 </div>
             </div>
             <button id="disconnect-btn" class="disconnect-btn">End Session</button>
         </header>
 
-        <!-- Slide Display -->
+        <!-- Tool Activity Indicator -->
+        <div id="tool-activity" class="tool-activity" style="display:none;">
+            <div class="tool-activity-inner">
+                <div class="tool-dots">
+                    <span class="tool-dot"></span>
+                    <span class="tool-dot"></span>
+                    <span class="tool-dot"></span>
+                </div>
+                <span id="tool-activity-text" class="tool-activity-text">Searching...</span>
+            </div>
+        </div>
+
+        <!-- Itinerary Card (concierge stage, hidden by default) -->
+        <div id="itinerary-container" class="itinerary-container" style="display:none;">
+            <div class="itinerary-card">
+                <h3 class="itinerary-title itin-reveal" style="--reveal-order: 0;">Your Trip to Next '26</h3>
+                <div class="itinerary-section itin-reveal" style="--reveal-order: 1;">
+                    <div class="itinerary-label">Flight</div>
+                    <div id="itin-flight" class="itinerary-value"></div>
+                </div>
+                <div class="itinerary-section itin-reveal" style="--reveal-order: 2;">
+                    <div class="itinerary-label">Hotel</div>
+                    <div id="itin-hotel" class="itinerary-value"></div>
+                </div>
+                <div class="itinerary-section itin-reveal" style="--reveal-order: 3;">
+                    <div class="itinerary-label">Event</div>
+                    <div id="itin-event" class="itinerary-value">Google Cloud Next 2026 &middot; April 22-24 &middot; Las Vegas</div>
+                </div>
+                <div class="itinerary-section itin-reveal" style="--reveal-order: 4;">
+                    <div class="itinerary-label">Traveler</div>
+                    <div id="itin-email" class="itinerary-value"></div>
+                </div>
+                <button id="confirm-keynote-btn" class="confirm-btn itin-reveal" style="--reveal-order: 5;">Confirm &amp; Join Keynote</button>
+            </div>
+        </div>
+
+        <!-- Slide Display (keynote stage) -->
         <div id="slide-container" class="slide-container" style="display:none;">
             <img id="slide-image" class="slide-image" alt="Presentation slide">
             <div id="slide-topic" class="slide-topic"></div>
@@ -82,7 +194,7 @@
         <main id="chat-messages" class="chat-messages"></main>
 
         <footer class="session-footer">
-            <p>Powered by Google ADK · Gemini Live API · Firestore Vector Search</p>
+            <p>Powered by Google ADK &middot; Gemini Live API &middot; Firestore Vector Search &middot; A2A Protocol</p>
         </footer>
     </div>
 
