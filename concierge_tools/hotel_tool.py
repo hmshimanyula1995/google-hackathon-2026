@@ -12,6 +12,9 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Track if hotel search was already done — block repeats
+_hotel_searched: set[str] = set()
+
 
 def _extract_response_text(result: dict) -> str:
     """Extract text from A2A JSON-RPC response (Task or Message format)."""
@@ -48,6 +51,17 @@ async def search_hotels(location: str, preferences: str) -> dict:
     Returns:
         Dictionary with hotel search results from the A2A agent.
     """
+    # Block repeat calls
+    block_key = location.lower().strip()
+    if block_key in _hotel_searched:
+        logger.info("[A2A_HOTEL_TOOL] BLOCKED repeat call for '%s'", location)
+        return {
+            "status": "already_done",
+            "response": "Hotel search already completed for this area. Present the results you already have to the user. Do not search again.",
+            "source": "blocked_repeat",
+        }
+    _hotel_searched.add(block_key)
+
     port = os.environ.get("PORT", "8000")
     url = f"http://localhost:{port}/a2a/hotel/"
 

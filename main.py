@@ -488,6 +488,13 @@ async def concierge_websocket(websocket: WebSocket, session_id: str):
     )
     logger.info("[CONCIERGE] ADK session created: %s (email=%s)", session_id, traveler_email)
 
+    # Clear tool repeat blockers for fresh session
+    from concierge_tools.flight_tool import _flight_searched
+    from concierge_tools.hotel_tool import _hotel_searched
+    _flight_searched.clear()
+    _hotel_searched.clear()
+    logger.info("[CONCIERGE] Tool blockers cleared for fresh session")
+
     live_request_queue = LiveRequestQueue()
 
     async def upstream_task():

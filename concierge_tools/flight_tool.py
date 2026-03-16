@@ -12,6 +12,9 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Track if flight search was already done this session — block repeats
+_flight_searched: set[str] = set()
+
 
 def _extract_response_text(result: dict) -> str:
     """Extract text from A2A JSON-RPC response (Task or Message format)."""
@@ -48,6 +51,17 @@ async def search_flights(origin: str, preferences: str) -> dict:
     Returns:
         Dictionary with flight search results from the A2A agent.
     """
+    # Block repeat calls — first call goes through, all others are rejected
+    block_key = origin.lower().strip()
+    if block_key in _flight_searched:
+        logger.info("[A2A_FLIGHT_TOOL] BLOCKED repeat call for '%s'", origin)
+        return {
+            "status": "already_done",
+            "response": "Flight search already completed for this city. Present the results you already have to the user. Do not search again.",
+            "source": "blocked_repeat",
+        }
+    _flight_searched.add(block_key)
+
     port = os.environ.get("PORT", "8000")
     url = f"http://localhost:{port}/a2a/flight/"
 
