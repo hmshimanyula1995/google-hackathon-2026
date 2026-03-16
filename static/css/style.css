@@ -961,23 +961,48 @@ body {
 /* ======================== */
 
 .slide-container {
-    padding: 24px;
+    padding: 20px 24px;
     background: transparent;
     border-bottom: 1px solid var(--border);
     text-align: center;
     position: relative;
     z-index: 10;
+    overflow: hidden;
 }
 
 .slide-image {
     max-width: 100%;
-    max-height: 420px;
+    max-height: 280px;
     border-radius: 20px;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border);
-    margin: 0 auto 16px;
-    animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    margin: 0 auto 12px;
     background: transparent;
+    display: block;
+    transition: opacity 0.3s ease;
+}
+
+/* Applied via JS on each new slide for re-triggerable animation */
+.slide-image.slide-enter {
+    animation: slideFadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes slideFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Slide loading skeleton — shown while Imagen generates */
+.slide-skeleton {
+    width: 100%;
+    max-width: 500px;
+    height: 180px;
+    margin: 0 auto 12px;
+    border-radius: 20px;
+    background: linear-gradient(90deg, rgba(66,133,244,0.04) 25%, rgba(66,133,244,0.08) 50%, rgba(66,133,244,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border: 1px solid var(--border);
 }
 
 .slide-topic {
@@ -985,8 +1010,17 @@ body {
     font-size: 16px;
     color: var(--text-secondary);
     font-weight: 500;
-    animation: slideUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s both;
     letter-spacing: 0.5px;
+}
+
+/* Applied via JS for re-triggerable animation */
+.slide-topic.slide-topic-enter {
+    animation: slideUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s both;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ======================== */
@@ -1174,6 +1208,9 @@ body {
     .itinerary-label { min-width: auto; }
     .audio-visualizer { margin-left: 8px; }
     .tool-activity { padding: 8px 16px; }
+    .slide-image { max-height: 200px; }
+    .slide-skeleton { height: 140px; }
+    .slide-container { padding: 12px 16px; }
 }
 
 /* Particles and Glow Background for Dark Theme */

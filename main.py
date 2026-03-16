@@ -375,6 +375,17 @@ async def keynote_websocket(websocket: WebSocket, session_id: str):
                     for part in event.content.parts:
                         if part.inline_data and part.inline_data.data:
                             await websocket.send_bytes(part.inline_data.data)
+                        elif hasattr(part, "function_call") and part.function_call:
+                            # Early loading signal when agent calls generate_slide
+                            fn_name = getattr(part.function_call, "name", "")
+                            if fn_name == "generate_slide":
+                                args = getattr(part.function_call, "args", {}) or {}
+                                topic = args.get("topic", "")
+                                await websocket.send_text(json.dumps({
+                                    "type": "slide_loading",
+                                    "topic": topic,
+                                }))
+                                logger.info("Slide loading (function_call): '%s'", topic)
                         elif part.function_response:
                             pass
                         elif part.text:
@@ -409,6 +420,33 @@ async def keynote_websocket(websocket: WebSocket, session_id: str):
 
     async def slide_drainer_task():
         """Drain session-scoped slide queue and the global fallback."""
+
+        async def _dispatch_slide(slide_data: dict, source: str) -> None:
+            """Route a slide queue item to the correct WebSocket message type."""
+            topic = slide_data.get("topic", "")
+            if slide_data.get("loading"):
+                # Loading skeleton — shown while Imagen generates
+                await websocket.send_text(json.dumps({
+                    "type": "slide_loading",
+                    "topic": topic,
+                }))
+                logger.info("Slide loading signal sent: '%s' [%s]", topic, source)
+            elif slide_data.get("text_only"):
+                # Imagen failed — send topic-only fallback
+                await websocket.send_text(json.dumps({
+                    "type": "slide_text",
+                    "topic": topic,
+                }))
+                logger.info("Slide text fallback sent: '%s' [%s]", topic, source)
+            else:
+                # Full slide with image
+                await websocket.send_text(json.dumps({
+                    "type": "slide",
+                    "image": slide_data["image"],
+                    "topic": topic,
+                }))
+                logger.info("Slide delivered: '%s' (%d KB) [%s]", topic, len(slide_data.get("image", "")) // 1024, source)
+
         try:
             while True:
                 # Drain session-scoped queue
@@ -420,32 +458,22 @@ async def keynote_websocket(websocket: WebSocket, session_id: str):
                         except queue.Empty:
                             break
                         try:
-                            await websocket.send_text(json.dumps({
-                                "type": "slide",
-                                "image": slide_data["image"],
-                                "topic": slide_data["topic"],
-                            }))
-                            logger.info("Slide delivered: '%s' (%d KB)", slide_data["topic"], len(slide_data["image"]) // 1024)
+                            await _dispatch_slide(slide_data, "session")
                         except Exception as e:
                             logger.error("Failed to send slide: %s", e)
 
-                # Also drain the global slide_queue (backward compat — image_tool still uses it)
+                # Also drain the global slide_queue (image_tool still uses it)
                 while not image_tool.slide_queue.empty():
                     try:
                         slide_data = image_tool.slide_queue.get_nowait()
                     except queue.Empty:
                         break
                     try:
-                        await websocket.send_text(json.dumps({
-                            "type": "slide",
-                            "image": slide_data["image"],
-                            "topic": slide_data["topic"],
-                        }))
-                        logger.info("Slide delivered (global): '%s'", slide_data["topic"])
+                        await _dispatch_slide(slide_data, "global")
                     except Exception as e:
                         logger.error("Failed to send slide: %s", e)
 
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.1)
         except WebSocketDisconnect:
             pass
         except asyncio.CancelledError:

@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What If Google Cloud Next Was Run by AI Agents? We Built It.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --google-blue: #4285F4;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC04;
+            --google-green: #34A853;
+            --bg: #f8f9fa;
+            --surface: rgba(255, 255, 255, 0.85);
+            --border: rgba(0, 0, 0, 0.08);
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --text-muted: #9aa0a6;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.1), 0 0 40px rgba(66, 133, 244, 0.05);
+            --radius: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 17px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ==================== GLOW BACKGROUND ==================== */
+        .glow-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(66, 133, 244, 0.08), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(234, 67, 53, 0.05), transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(52, 168, 83, 0.05), transparent 40%),
+                radial-gradient(circle at 30% 70%, rgba(251, 188, 4, 0.04), transparent 35%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ==================== HERO ==================== */
+        .hero {
+            position: relative;
+            padding: 100px 24px 80px;
+            text-align: center;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, rgba(66, 133, 244, 0.06) 0%, transparent 60%);
+            z-index: -1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(66, 133, 244, 0.1);
+            color: var(--google-blue);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(66, 133, 244, 0.2);
+            margin-bottom: 32px;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px; height: 8px;
+            background: var(--google-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(52, 168, 83, 0.5);
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            color: var(--text);
+            max-width: 900px;
+            margin: 0 auto 20px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--google-blue), var(--google-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(16px, 2.5vw, 20px);
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 40px;
+            font-weight: 400;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .hero-meta-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, var(--google-blue), #6ba3f7);
+            color: #fff;
+            border: none;
+            border-radius: 28px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(66, 133, 244, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(66, 133, 244, 0.5);
+        }
+
+        .hero-cta svg {
+            width: 18px; height: 18px;
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        /* ==================== SECTION HEADERS ==================== */
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(26px, 3.5vw, 36px);
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            color: var(--text);
+            margin: 64px 0 24px;
+            line-height: 1.2;
+        }
+
+        h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(20px, 2.5vw, 24px);
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: var(--text);
+            margin: 40px 0 16px;
+            line-height: 1.3;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ==================== DIVIDER ==================== */
+        .divider {
+            height: 4px;
+            border: none;
+            background: linear-gradient(90deg, var(--google-blue), var(--google-red), var(--google-yellow), var(--google-green));
+            border-radius: 2px;
+            margin: 56px 0;
+            opacity: 0.6;
+        }
+
+        /* ==================== PROBLEM CARD ==================== */
+        .problem-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+            margin: 32px 0;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--google-red), var(--google-yellow));
+        }
+
+        .problem-card ol {
+            padding-left: 24px;
+            margin: 16px 0;
+        }
+
+        .problem-card ol li {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .problem-card ol li strong {
+            color: var(--text);
+        }
+
+        /* ==================== STAGE CARDS ==================== */
+        .stage-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+            margin: 32px 0;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .stage-card.stage-1::before { background: linear-gradient(90deg, var(--google-blue), #8ab4f8); }
+        .stage-card.stage-2::before { background: linear-gradient(90deg, var(--google-yellow), #fdd835); }
+        .stage-card.stage-3::before { background: linear-gradient(90deg, var(--google-green), #66bb6a); }
+
+        .stage-label {
+            display: inline-block;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 4px 14px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stage-1 .stage-label { background: rgba(66, 133, 244, 0.1); color: var(--google-blue); }
+        .stage-2 .stage-label { background: rgba(251, 188, 4, 0.15); color: #e8a800; }
+        .stage-3 .stage-label { background: rgba(52, 168, 83, 0.1); color: var(--google-green); }
+
+        .stage-card h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        .stage-card p {
+            margin-bottom: 16px;
+        }
+
+        .stage-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ==================== BLOCKQUOTE ==================== */
+        blockquote {
+            background: rgba(66, 133, 244, 0.04);
+            border-left: 4px solid var(--google-blue);
+            padding: 16px 24px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        blockquote em {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* ==================== HIGHLIGHT BOX ==================== */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(66, 133, 244, 0.06), rgba(52, 168, 83, 0.04));
+            border: 1px solid rgba(66, 133, 244, 0.12);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            margin: 32px 0;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ==================== ARCHITECTURE IMAGE ==================== */
+        .arch-container {
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .arch-container img {
+            max-width: 100%;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .arch-caption {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 16px;
+            font-weight: 500;
+        }
+
+        /* ==================== CODE BLOCK ==================== */
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 16px;
+            padding: 28px;
+            margin: 24px 0;
+            overflow-x: auto;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .code-block pre {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #cdd6f4;
+            white-space: pre;
+            margin: 0;
+        }
+
+        .code-block .comment { color: #6c7086; }
+        .code-block .keyword { color: #cba6f7; }
+        .code-block .string { color: #a6e3a1; }
+        .code-block .label { color: #89b4fa; }
+        .code-block .arrow { color: #f9e2af; }
+
+        /* ==================== TABLE ==================== */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 24px 0;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+        }
+
+        thead {
+            background: linear-gradient(135deg, rgba(66, 133, 244, 0.08), rgba(66, 133, 244, 0.04));
+        }
+
+        th {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text);
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 14px 20px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        td strong {
+            color: var(--text);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: rgba(66, 133, 244, 0.03);
+        }
+
+        /* ==================== CHALLENGE CARDS ==================== */
+        .challenge-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            margin: 24px 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .challenge-card h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .challenge-card .fix-label {
+            display: inline-block;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--google-green);
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        /* ==================== FEATURES LIST ==================== */
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            color: var(--text-secondary);
+        }
+
+        .features-list li::before {
+            content: '';
+            flex-shrink: 0;
+            width: 8px; height: 8px;
+            margin-top: 8px;
+            border-radius: 50%;
+            background: var(--google-blue);
+        }
+
+        .features-list li:nth-child(2)::before { background: var(--google-red); }
+        .features-list li:nth-child(3)::before { background: var(--google-yellow); }
+        .features-list li:nth-child(4)::before { background: var(--google-green); }
+        .features-list li:nth-child(5)::before { background: var(--google-blue); }
+
+        /* ==================== CTA SECTION ==================== */
+        .cta-section {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 48px 36px;
+            margin: 56px 0 0;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, var(--google-blue), var(--google-red), var(--google-yellow), var(--google-green));
+        }
+
+        .cta-section h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        .cta-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        .cta-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 28px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .cta-link.primary {
+            background: linear-gradient(135deg, var(--google-blue), #6ba3f7);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(66, 133, 244, 0.35);
+        }
+
+        .cta-link.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(66, 133, 244, 0.5);
+        }
+
+        .cta-link.secondary {
+            background: rgba(66, 133, 244, 0.08);
+            color: var(--google-blue);
+            border: 1px solid rgba(66, 133, 244, 0.2);
+        }
+
+        .cta-link.secondary:hover {
+            background: rgba(66, 133, 244, 0.15);
+        }
+
+        .cta-link.green {
+            background: linear-gradient(135deg, var(--google-green), #66bb6a);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(52, 168, 83, 0.35);
+        }
+
+        .cta-link.green:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(52, 168, 83, 0.5);
+        }
+
+        /* ==================== FOOTER ==================== */
+        .blog-footer {
+            text-align: center;
+            padding: 40px 24px 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .blog-footer p {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 12px;
+        }
+
+        .blog-footer .hashtag {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: var(--google-blue);
+            font-size: 15px;
+        }
+
+        /* ==================== STATS ROW ==================== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-card:nth-child(1) .stat-number { color: var(--google-blue); }
+        .stat-card:nth-child(2) .stat-number { color: var(--google-red); }
+        .stat-card:nth-child(3) .stat-number { color: var(--google-yellow); }
+        .stat-card:nth-child(4) .stat-number { color: var(--google-green); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* ==================== VISION LIST ==================== */
+        .vision-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .vision-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 0;
+            color: var(--text-secondary);
+        }
+
+        .vision-icon {
+            flex-shrink: 0;
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .vision-list li:nth-child(1) .vision-icon { background: rgba(66, 133, 244, 0.1); }
+        .vision-list li:nth-child(2) .vision-icon { background: rgba(251, 188, 4, 0.1); }
+        .vision-list li:nth-child(3) .vision-icon { background: rgba(52, 168, 83, 0.1); }
+        .vision-list li:nth-child(4) .vision-icon { background: rgba(234, 67, 53, 0.1); }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 640px) {
+            .hero { padding: 60px 20px 50px; }
+            .hero-meta { gap: 12px; }
+            .content { padding: 0 16px 60px; }
+            .stage-card, .problem-card, .challenge-card { padding: 24px 20px; }
+            .code-block { padding: 20px 16px; }
+            .code-block pre { font-size: 12px; }
+            th, td { padding: 10px 14px; font-size: 13px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .cta-section { padding: 32px 20px; }
+            .cta-links { flex-direction: column; align-items: center; }
+            .cta-link { width: 100%; justify-content: center; }
+            .highlight-box { padding: 20px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-bg"></div>
+
+    <!-- ==================== HERO ==================== -->
+    <header class="hero">
+        <div class="hero-badge">Gemini Live Agent Challenge</div>
+        <h1>What If Google Cloud Next Was Run by <span>AI Agents</span>? We Built It.</h1>
+        <p class="hero-subtitle">
+            Building a multi-agent conference experience with Google ADK, Gemini Live API,
+            A2A Protocol, and 8 Google Cloud services
+        </p>
+        <div class="hero-meta">
+            <span class="hero-meta-item">
+                <span class="hero-meta-dot" style="background:var(--google-blue)"></span>
+                5 AI Agents
+            </span>
+            <span class="hero-meta-item">
+                <span class="hero-meta-dot" style="background:var(--google-red)"></span>
+                2 A2A Connections
+            </span>
+            <span class="hero-meta-item">
+                <span class="hero-meta-dot" style="background:var(--google-yellow)"></span>
+                8 GCP Services
+            </span>
+            <span class="hero-meta-item">
+                <span class="hero-meta-dot" style="background:var(--google-green)"></span>
+                Real-time Voice
+            </span>
+        </div>
+        <a href="https://next-live-agent-338756532561.us-central1.run.app" target="_blank" class="hero-cta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Try the Live Demo
+        </a>
+    </header>
+
+    <!-- ==================== CONTENT ==================== -->
+    <main class="content">
+
+        <p>
+            Every year, Google Cloud Next brings together tens of thousands of developers in Las Vegas. There are 700+ sessions, 231 announcements, and three days of non-stop content. But behind the scenes, there's an enormous logistics machine that makes it all happen  &ndash; from the moment you receive your invitation email to the moment a presenter walks on stage and delivers a keynote.
+        </p>
+        <p>
+            We asked ourselves: <strong>what if that entire journey  &ndash; invitation, travel booking, and keynote presentation  &ndash; was powered by AI agents working together?</strong>
+        </p>
+        <p>
+            Not a chatbot. Not a text box. A living, breathing system of AI agents that communicate with each other, see and generate images, hear your voice, speak back naturally, and coordinate in real-time to deliver the full Google Cloud Next experience.
+        </p>
+        <p>
+            That's what we built. We call it <strong>Next Live</strong>.
+        </p>
+
+        <hr class="divider">
+
+        <!-- ==================== THE PROBLEM ==================== -->
+        <h2>The Problem: Conference Logistics is a Human Assembly Line</h2>
+        <p>Think about what happens when you attend Google Cloud Next:</p>
+
+        <div class="problem-card">
+            <ol>
+                <li><strong>You receive an invitation email</strong>  &ndash; someone at Google designed it, someone sent it.</li>
+                <li><strong>You book your travel</strong>  &ndash; you search flights, compare prices, find hotels near the Convention Center. Hours of work, or a call to a travel agent.</li>
+                <li><strong>You attend the keynote</strong>  &ndash; a human presenter walks on stage with a slide deck. They present, tell stories, take audience questions. Behind them, someone advances the slides.</li>
+            </ol>
+            <p style="margin-top:16px;margin-bottom:0;">
+                Every step involves humans coordinating with other humans. <strong>What if each of those humans was an AI agent? And what if those agents could talk to each other?</strong>
+            </p>
+        </div>
+
+        <p>
+            That's not science fiction anymore. With Google's Agent Development Kit (ADK), the Gemini Live API, and the Agent-to-Agent (A2A) protocol, we built exactly that.
+        </p>
+
+        <hr class="divider">
+
+        <!-- ==================== THE SOLUTION ==================== -->
+        <h2>The Solution: 5 AI Agents Running Google Cloud Next</h2>
+        <p>Next Live is a <strong>3-stage interactive AI experience</strong> that mirrors the real conference journey:</p>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">AI Agents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Stages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2</div>
+                <div class="stat-label">A2A Links</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">GCP Services</div>
+            </div>
+        </div>
+
+        <!-- Stage 1 -->
+        <div class="stage-card stage-1">
+            <div class="stage-label">Stage 1</div>
+            <h3>The Invitation</h3>
+            <p>
+                It all begins the same way it does in real life  &ndash; with an email. The user enters their email address on our landing page. An AI-powered invitation agent uses <strong>Imagen 4.0</strong> to generate a beautiful, unique invitation card for Google Cloud Next 2026. The card is rendered on screen and simultaneously sent to their inbox.
+            </p>
+            <p>This is the moment of excitement. You've been invited. Now what?</p>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="stage-card stage-2">
+            <div class="stage-label">Stage 2</div>
+            <h3>The Travel Concierge (Maya)</h3>
+            <p>
+                You click "Call Travel Concierge" and you're connected to <strong>Maya</strong>  &ndash; a voice-powered AI travel agent. Maya greets you warmly. She asks where you'll be flying from. You say "Chicago"  &ndash; out loud, with your voice.
+            </p>
+            <blockquote>
+                <em>"Chicago, great! Let me pull up some flights for you right now."</em>
+            </blockquote>
+            <p>
+                Behind the scenes, Maya sends a request to the <strong>FlightAgent</strong> using the <strong>A2A (Agent-to-Agent) protocol</strong>. The FlightAgent uses Google Search grounding to find real, current flight options. Real airlines. Real prices. Real departure times.
+            </p>
+            <p>
+                She does the same with the <strong>HotelAgent</strong> for accommodations near the Convention Center. Two agents collaborated with Maya through A2A  &ndash; just like real travel coordination, but with AI agents talking to each other.
+            </p>
+            <p>
+                But Maya doesn't just hear you  &ndash; <strong>she can see too.</strong> Share a photo of a hotel you found online and Maya analyzes the image, identifies the property, and works it into the conversation. See, Hear, and Speak  &ndash; all three modalities.
+            </p>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="stage-card stage-3">
+            <div class="stage-label">Stage 3</div>
+            <h3>The Keynote (Alex)</h3>
+            <p>
+                Now comes the main event. You click "Join Keynote" and meet <strong>Alex</strong>  &ndash; an AI keynote presenter. Alex is not a chatbot. Alex is a <strong>performer</strong>.
+            </p>
+            <blockquote>
+                <em>"Google Cloud Next '25. Thirty thousand developers. 231 announcements. Three days in Las Vegas. And one theme that changes everything. AI agents."</em>
+            </blockquote>
+            <p>Alex delivers a structured keynote presentation with six sections. While he speaks, slides are generated in real-time using <strong>Imagen 4.0</strong>.</p>
+            <ul class="features-list">
+                <li><strong>Interruptible.</strong> Ask a question mid-sentence and he'll pivot naturally.</li>
+                <li><strong>Grounded in real data.</strong> Every fact comes from a Firestore vector database containing 264 minutes of real session transcripts. No hallucinations.</li>
+                <li><strong>Context-aware.</strong> Alex tracks which topics you've asked about and connects them across turns.</li>
+                <li><strong>Live slides.</strong> Slide generation runs in parallel  &ndash; Alex speaks while the slide is being generated, and it appears seamlessly.</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            This is the meta-story: <strong>Alex is an AI agent, built with ADK, explaining the AI agent ecosystem that was announced at the conference where ADK was launched.</strong> When Alex describes ADK, he's using the very tool he's describing. When he talks about A2A protocol, his concierge colleague Maya just used that same protocol to book your flights.
+        </div>
+
+        <hr class="divider">
+
+        <!-- ==================== ARCHITECTURE ==================== -->
+        <h2>The Architecture: How It All Works</h2>
+        <h3>5 Agents, 2 A2A Connections, 8 Google Cloud Services</h3>
+
+        <div class="arch-container">
+            <img
+                src="https://storage.googleapis.com/next-live-agent-assets/blog/architecture-diagram.png"
+                alt="Next Live Architecture: 3-stage journey with 5 AI agents, A2A protocol, and 8 Google Cloud services"
+                loading="lazy"
+            >
+            <p class="arch-caption">System architecture: Invitation, Travel Booking, and Keynote stages with A2A inter-agent communication</p>
+        </div>
+
+        <div class="code-block"><pre><span class="label">Stage 1: INVITATION</span> <span class="comment">(REST API)</span>
+  Browser <span class="arrow">&rarr;</span> POST /api/invitation <span class="arrow">&rarr;</span> <span class="string">Imagen 4.0</span> <span class="arrow">&rarr;</span> Email via Gmail
+
+<span class="label">Stage 2: TRAVEL BOOKING</span> <span class="comment">(Gemini Live API, real-time voice)</span>
+  Browser <span class="arrow">&harr;</span> WebSocket <span class="arrow">&rarr;</span> <span class="keyword">ConciergeAgent "Maya"</span>
+    <span class="arrow">&rarr;</span> A2A JSON-RPC <span class="arrow">&rarr;</span> <span class="keyword">HotelAgent</span>  <span class="comment">(google_search grounding)</span>
+    <span class="arrow">&rarr;</span> A2A JSON-RPC <span class="arrow">&rarr;</span> <span class="keyword">FlightAgent</span> <span class="comment">(google_search grounding)</span>
+    <span class="arrow">&rarr;</span> confirm_booking <span class="arrow">&rarr;</span> <span class="string">itinerary card + email</span>
+
+<span class="label">Stage 3: KEYNOTE</span> <span class="comment">(Gemini Live API, real-time voice)</span>
+  Browser <span class="arrow">&harr;</span> WebSocket <span class="arrow">&rarr;</span> <span class="keyword">KeynoteAgent "Alex"</span>
+    <span class="arrow">&rarr;</span> <span class="string">Firestore vector search</span> <span class="comment">(98 docs, 768-dim)</span>
+    <span class="arrow">&rarr;</span> <span class="string">Imagen 4.0 slide gen</span>   <span class="comment">(16:9 keynote slides)</span>
+    <span class="arrow">&rarr;</span> <span class="string">Python callbacks</span>       <span class="comment">(topic tracking, zero LLM cost)</span></pre></div>
+
+        <h3>The Gemini Live API: Voice-First, Not Text-First</h3>
+        <p>
+            Both Maya and Alex use <strong>gemini-live-2.5-flash-native-audio</strong>  &ndash; a Gemini model that natively processes and generates audio. This isn't text-to-speech. The model thinks in audio. The result is natural prosody, natural pauses, and the ability to be interrupted mid-sentence  &ndash; just like a real human conversation.
+        </p>
+        <p>
+            We use bidirectional WebSocket streaming (BIDI mode) so audio flows both ways simultaneously. The user can start speaking while the agent is still talking, and the agent detects this and stops naturally.
+        </p>
+
+        <h3>The A2A Protocol: Agents Talking to Agents</h3>
+        <p>
+            When Maya needs flight options, she sends an <strong>A2A JSON-RPC 2.0 message</strong> to the FlightAgent  &ndash; a separate ADK agent at its own endpoint. The FlightAgent processes the request independently using Google Search grounding (real, live data), and returns results through the A2A Task response format.
+        </p>
+        <p>
+            This demonstrates <strong>multi-agent orchestration</strong> where agents with different capabilities collaborate through a standard protocol. Maya orchestrates. Hotel and Flight agents specialize. They communicate through A2A  &ndash; the very protocol announced at the conference Alex presents about.
+        </p>
+
+        <h3>Firestore RAG: Grounding in Reality</h3>
+        <p>
+            Alex never fabricates facts. Before making any claim, he searches a Firestore vector database containing 98 chunks from 4 priority YouTube videos (264 minutes of content). Queries are embedded using <strong>text-embedding-005</strong> (768 dimensions) and matched using COSINE distance.
+        </p>
+
+        <h3>Zero-Cost Context Tracking</h3>
+        <p>
+            Instead of additional LLM calls to track context, we use <strong>Python callbacks</strong> that run as plain code  &ndash; no model invocation. They track topics discussed, detect related topic pairs, and generate bridge suggestions. This keeps the system at <strong>1 LLM call per turn</strong>.
+        </p>
+
+        <hr class="divider">
+
+        <!-- ==================== GCP SERVICES TABLE ==================== -->
+        <h2>Google Cloud Services Used</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Role in Our System</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Gemini Live API</strong></td>
+                        <td>Real-time bidirectional voice streaming for Maya and Alex  &ndash; native audio, not TTS</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agent Development Kit (ADK)</strong></td>
+                        <td>Framework for all 5 agents  &ndash; LlmAgent, FunctionTool, callbacks, A2A integration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud Run</strong></td>
+                        <td>Hosts the FastAPI server with WebSocket support, session affinity, and 3600s timeout</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Firestore</strong></td>
+                        <td>Vector knowledge base  &ndash; 98 documents with 768-dim COSINE vector index</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vertex AI Embeddings</strong></td>
+                        <td>text-embedding-005 for embedding search queries and document chunks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vertex AI Imagen</strong></td>
+                        <td>imagen-4.0-fast-generate-001 for invitation cards and keynote slides</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cloud Build</strong></td>
+                        <td>CI/CD pipeline  &ndash; automated container builds and deployment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Secret Manager</strong></td>
+                        <td>Gmail app password stored securely, accessed by Cloud Run service account</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ==================== TECHNICAL CHALLENGES ==================== -->
+        <h2>Technical Challenges We Solved</h2>
+
+        <div class="challenge-card">
+            <h4>The Async Deadlock</h4>
+            <p>Our A2A tool wrappers initially used synchronous HTTP calls. But since the A2A agents are on the <strong>same server</strong>, the synchronous call blocked the event loop, preventing the server from processing the request it was waiting for. Classic deadlock.</p>
+            <div class="fix-label">Fix</div>
+            <p style="margin-bottom:0;">Switched to <strong>httpx.AsyncClient</strong> with await, so the event loop stays free to process incoming A2A requests while the tool waits.</p>
+        </div>
+
+        <div class="challenge-card">
+            <h4>The Infinite Tool Loop</h4>
+            <p>The Gemini Live API model sometimes called the same tool repeatedly instead of presenting results. Despite explicit instruction guards, the model ignored them.</p>
+            <div class="fix-label">Fix</div>
+            <p style="margin-bottom:0;">Implemented <strong>code-level caching</strong> in tool functions. If the same query is called within 120 seconds, it instantly returns cached data. The model gets the same result and moves on.</p>
+        </div>
+
+        <div class="challenge-card">
+            <h4>Audio Context Isolation</h4>
+            <p>Transitioning from Maya's voice session to Alex's keynote broke the Web Audio API pipeline. The AudioContext became stale, and new worklet nodes failed silently.</p>
+            <div class="fix-label">Fix</div>
+            <p style="margin-bottom:0;">Separated Alex onto a <strong>standalone page</strong> with its own HTML, JavaScript, and AudioContext. Full page navigation means fresh browser context, fresh mic, clean audio pipeline.</p>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ==================== BIGGER PICTURE ==================== -->
+        <h2>The Bigger Picture</h2>
+        <p>What we built is a proof of concept for something much larger. Imagine every conference, every corporate event, every training session powered by coordinating AI agents:</p>
+
+        <ul class="vision-list">
+            <li>
+                <span class="vision-icon">&#x2709;</span>
+                <span>An <strong>invitation agent</strong> that personalizes outreach based on the recipient's interests</span>
+            </li>
+            <li>
+                <span class="vision-icon">&#x2708;</span>
+                <span>A <strong>logistics agent</strong> that books travel, arranges accommodation, and handles dietary requirements</span>
+            </li>
+            <li>
+                <span class="vision-icon">&#x1F3A4;</span>
+                <span>A <strong>presentation agent</strong> that delivers content grounded in real data, adapts to questions, and generates visuals in real-time</span>
+            </li>
+            <li>
+                <span class="vision-icon">&#x1F91D;</span>
+                <span>A <strong>networking agent</strong> that connects attendees with shared interests</span>
+            </li>
+        </ul>
+
+        <p>
+            The tools exist today. ADK gives you the agent framework. A2A gives you the communication protocol. Gemini Live gives you the voice interface. Firestore gives you the knowledge base. Imagen gives you the visuals. <strong>We just put them together.</strong>
+        </p>
+
+        <!-- ==================== CTA ==================== -->
+        <div class="cta-section">
+            <h2>Try It Yourself</h2>
+            <p>Enter your email, get your invitation, talk to Maya, book your trip, and join Alex's keynote. The entire journey runs on Google Cloud.</p>
+            <div class="cta-links">
+                <a href="https://next-live-agent-338756532561.us-central1.run.app" target="_blank" class="cta-link primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Full 3-Stage Demo
+                </a>
+                <a href="https://next-live-agent-338756532561.us-central1.run.app/keynote" target="_blank" class="cta-link green">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                    Keynote Only
+                </a>
+                <a href="https://github.com/hmshimanyula1995/google-hackathon-2026" target="_blank" class="cta-link secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    View Source
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="blog-footer">
+        <p>Built by Michael Hudson Shimanyula. This blog post was created for the purposes of entering the Gemini Live Agent Challenge hackathon on Devpost.</p>
+        <p>Powered by Google ADK, Gemini Live API, A2A Protocol, Cloud Run, Firestore, Vertex AI, Imagen 4.0, and Cloud Build.</p>
+        <p class="hashtag">#GeminiLiveAgentChallenge</p>
+    </footer>
+</body>
+</html>

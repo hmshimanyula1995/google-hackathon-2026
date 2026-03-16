@@ -53,6 +53,13 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
         Confirmation with topic and key points for narration.
     """
     try:
+        # Push loading signal immediately so the frontend shows a skeleton
+        slide_queue.put({
+            "loading": True,
+            "topic": topic,
+        })
+        logger.info("Slide loading signal queued: '%s'", topic)
+
         prompt = (
             f"A clean, professional keynote presentation slide for a Google Cloud conference. "
             f"Title: '{topic}'. "
@@ -103,8 +110,16 @@ def generate_slide(topic: str, key_points: str, tool_context: ToolContext) -> di
 
     except Exception as e:
         logger.error("Slide generation failed for '%s': %s", topic, e, exc_info=True)
+        # Push a text-only fallback so the audience sees the topic at minimum
+        slide_queue.put({
+            "topic": topic,
+            "text_only": True,
+        })
         return {
             "status": "error",
             "topic": topic,
-            "what_the_slide_shows": f"The slide for '{topic}' is being prepared. Continue presenting.",
+            "what_the_slide_shows": (
+                f"The slide image for '{topic}' couldn't be generated, but the topic title "
+                f"is on screen. Key points: {key_points}. Continue presenting naturally."
+            ),
         }

@@ -454,14 +454,65 @@ async function connect(agentType) {
             const data = JSON.parse(event.data);
 
             if (data.type === "slide") {
-                slideImage.src = `data:image/png;base64,${data.image}`;
-                slideImage.style.display = "block";
-                slideTopic.textContent = data.topic || "";
-                slideContainer.style.display = "block";
-            } else if (data.type === "slide_text") {
+                // Preload the image before displaying to avoid jank
+                const img = new Image();
+                img.onload = () => {
+                    // Remove skeleton if present
+                    const skeleton = slideContainer.querySelector(".slide-skeleton");
+                    if (skeleton) skeleton.remove();
+
+                    // Reset animation classes
+                    slideImage.classList.remove("slide-enter");
+                    slideTopic.classList.remove("slide-topic-enter");
+
+                    slideImage.src = img.src;
+                    slideImage.style.display = "block";
+                    slideTopic.textContent = data.topic || "";
+                    slideContainer.style.display = "block";
+
+                    // Force reflow then re-trigger entrance animations
+                    void slideImage.offsetWidth;
+                    slideImage.classList.add("slide-enter");
+                    slideTopic.classList.add("slide-topic-enter");
+
+                    // Scroll chat after layout shift
+                    requestAnimationFrame(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    });
+                };
+                img.src = `data:image/png;base64,${data.image}`;
+            } else if (data.type === "slide_loading") {
+                // Show skeleton placeholder while Imagen generates
                 slideImage.style.display = "none";
-                slideTopic.textContent = data.topic || "";
+                slideImage.classList.remove("slide-enter");
+                slideTopic.classList.remove("slide-topic-enter");
+                slideTopic.textContent = data.topic || "Preparing slide...";
+                slideTopic.classList.add("slide-topic-enter");
+
+                if (!slideContainer.querySelector(".slide-skeleton")) {
+                    const skeleton = document.createElement("div");
+                    skeleton.className = "slide-skeleton";
+                    slideContainer.insertBefore(skeleton, slideTopic);
+                }
                 slideContainer.style.display = "block";
+
+                requestAnimationFrame(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            } else if (data.type === "slide_text") {
+                // Text-only fallback (Imagen failed)
+                const skeleton = slideContainer.querySelector(".slide-skeleton");
+                if (skeleton) skeleton.remove();
+                slideImage.style.display = "none";
+                slideTopic.classList.remove("slide-topic-enter");
+                slideTopic.textContent = data.topic || "";
+                void slideTopic.offsetWidth;
+                slideTopic.classList.add("slide-topic-enter");
+                slideContainer.style.display = "block";
+
+                requestAnimationFrame(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
             } else if (data.type === "itinerary") {
                 document.getElementById("itin-flight").textContent =
                     data.flight?.description || "Pending";
