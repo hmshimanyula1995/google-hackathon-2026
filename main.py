@@ -504,6 +504,24 @@ async def concierge_websocket(websocket: WebSocket, session_id: str):
                         live_request_queue.send_content(
                             types.Content(parts=[types.Part(text=data["text"])], role="user")
                         )
+                    elif "image" in data:
+                        import base64 as _b64
+                        image_bytes = _b64.b64decode(data["image"])
+                        logger.info("[CONCIERGE] Image received: %d KB", len(image_bytes) // 1024)
+                        # Send image + text prompt together
+                        parts = [
+                            types.Part(inline_data=types.Blob(
+                                mime_type=data.get("mime_type", "image/jpeg"),
+                                data=image_bytes,
+                            )),
+                        ]
+                        if data.get("text"):
+                            parts.append(types.Part(text=data["text"]))
+                        else:
+                            parts.append(types.Part(text="I'm sharing an image with you. What do you see? Can you help me with this hotel or travel option?"))
+                        live_request_queue.send_content(
+                            types.Content(parts=parts, role="user")
+                        )
         except WebSocketDisconnect:
             logger.info("Client disconnected (concierge upstream): %s", session_id)
         except Exception as e:

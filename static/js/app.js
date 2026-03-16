@@ -377,6 +377,12 @@ async function connect(agentType) {
     hideToolActivity();
     setSpeaking(false);
 
+    // Show image upload bar only for concierge
+    const imageUploadBar = document.getElementById("image-upload-bar");
+    if (imageUploadBar) {
+        imageUploadBar.style.display = agentType === "concierge" ? "flex" : "none";
+    }
+
     setStatus("connecting");
 
     try {
@@ -643,3 +649,87 @@ confirmKeynoteBtn.addEventListener("click", () => {
 
 // Disconnect button
 disconnectBtn.addEventListener("click", disconnect);
+
+// --- Image Upload (Maya "See" capability) ---
+
+const imageFileInput = document.getElementById("image-file-input");
+const imageUploadBtn = document.getElementById("image-upload-btn");
+const imagePreviewContainer = document.getElementById("image-preview-container");
+const imagePreviewEl = document.getElementById("image-preview");
+const imageSendBtn = document.getElementById("image-send-btn");
+const imageCancelBtn = document.getElementById("image-cancel-btn");
+
+let pendingImageBase64 = null;
+let pendingImageMime = null;
+
+if (imageUploadBtn) {
+    imageUploadBtn.addEventListener("click", () => {
+        imageFileInput.click();
+    });
+}
+
+if (imageFileInput) {
+    imageFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            imagePreviewEl.src = dataUrl;
+            // Extract base64 and mime type
+            const parts = dataUrl.split(",");
+            pendingImageBase64 = parts[1];
+            pendingImageMime = parts[0].match(/:(.*?);/)[1];
+            // Show preview
+            imagePreviewContainer.style.display = "flex";
+            imageUploadBtn.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+if (imageSendBtn) {
+    imageSendBtn.addEventListener("click", () => {
+        if (!pendingImageBase64 || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+        // Send image over WebSocket
+        ws.send(JSON.stringify({
+            image: pendingImageBase64,
+            mime_type: pendingImageMime,
+            text: "I am sharing a photo with you. What do you see? Can you help me with this?",
+        }));
+
+        // Show the image in chat as a user message
+        const div = document.createElement("div");
+        div.className = "message user";
+        const img = document.createElement("img");
+        img.src = imagePreviewEl.src;
+        img.style.maxWidth = "200px";
+        img.style.borderRadius = "12px";
+        img.style.border = "1px solid var(--border)";
+        div.appendChild(img);
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        addMessage("Shared a photo with Maya", "system");
+        showToolActivity("Maya is looking at your photo...");
+
+        // Reset
+        pendingImageBase64 = null;
+        pendingImageMime = null;
+        imagePreviewContainer.style.display = "none";
+        imageUploadBtn.style.display = "inline-flex";
+        imageFileInput.value = "";
+    });
+}
+
+if (imageCancelBtn) {
+    imageCancelBtn.addEventListener("click", () => {
+        pendingImageBase64 = null;
+        pendingImageMime = null;
+        imagePreviewContainer.style.display = "none";
+        imageUploadBtn.style.display = "inline-flex";
+        imageFileInput.value = "";
+    });
+}
