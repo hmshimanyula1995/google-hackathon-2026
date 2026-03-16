@@ -267,8 +267,14 @@ logger.info("=" * 60)
 
 @app.get("/")
 async def root():
-    """Serve the custom frontend."""
+    """Serve the 3-stage journey frontend."""
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+
+@app.get("/keynote")
+async def keynote_page():
+    """Serve the standalone keynote page (Alex only — independent from concierge)."""
+    return FileResponse(os.path.join(STATIC_DIR, "keynote.html"))
 
 
 @app.get("/health")

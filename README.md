@@ -4,6 +4,7 @@
 > 5 ADK Agents | 2 A2A Connections | 7 Google Cloud Services | Real-Time Voice
 
 **Live Demo:** [next-live-agent-338756532561.us-central1.run.app](https://next-live-agent-338756532561.us-central1.run.app)
+**Keynote Only:** [next-live-agent-338756532561.us-central1.run.app/keynote](https://next-live-agent-338756532561.us-central1.run.app/keynote)
 
 ---
 
@@ -304,10 +305,12 @@ gcloud builds submit --config cloudbuild.yaml
 │   └── server.py                    # A2A HTTP server
 │
 ├── static/                          # Custom frontend
-│   ├── index.html                   # 3-stage UI: landing, invitation, session
-│   ├── css/style.css                # Google Cloud theme + animations
+│   ├── index.html                   # 3-stage journey: invitation → concierge → keynote
+│   ├── keynote.html                 # Standalone keynote page (Alex only, /keynote)
+│   ├── css/style.css                # Futuristic dark glassmorphic theme + animations
 │   └── js/
-│       ├── app.js                   # WebSocket client + audio + stage machine
+│       ├── app.js                   # 3-stage WebSocket client + audio + stage machine
+│       ├── keynote.js               # Standalone keynote client (independent audio)
 │       ├── pcm-player-processor.js  # AudioWorklet: 24kHz playback
 │       └── pcm-recorder-processor.js # AudioWorklet: 16kHz recording
 │

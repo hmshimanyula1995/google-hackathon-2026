@@ -606,21 +606,14 @@ conciergeBtn.addEventListener("click", () => {
 
 // Stage 3: Concierge → Keynote
 confirmKeynoteBtn.addEventListener("click", () => {
-    // Full clean teardown — connect() will get fresh mic permission
+    // Navigate to standalone keynote page — completely fresh, no shared audio state
     if (ws) {
         ws.onclose = null;
         ws.close();
         ws = null;
     }
     stopAudio();
-    isConnected = false;
-    clearChat();
-    setSpeaking(false);
-    hideToolActivity();
-    hideTypingIndicator();
-    itineraryContainer.style.display = "none";
-    activeAgent = null;
-    connect("keynote");
+    window.location.href = "/keynote";
 });
 
 // Disconnect button
