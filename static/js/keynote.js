@@ -90,6 +90,7 @@ function stopAudio() {
 
 let currentAlexBubble = null;
 let currentUserBubble = null;
+let lastAlexText = ""; // Track last text to prevent duplicates
 
 function addMessage(text, sender) {
     const div = document.createElement("div");
@@ -107,6 +108,11 @@ function addMessage(text, sender) {
 }
 
 function updateAlexTranscript(text) {
+    // Skip if this is a duplicate of the last completed bubble
+    if (text && lastAlexText && text.length > 20 && lastAlexText.includes(text.substring(0, 20))) {
+        return; // Duplicate — skip
+    }
+
     if (!currentAlexBubble) {
         currentAlexBubble = addMessage(text, "alex");
     } else {
@@ -183,6 +189,10 @@ async function connect() {
             } else if (data.type === "user_transcript") {
                 updateUserTranscript(data.text);
             } else if (data.type === "turn_complete") {
+                // Save last text for duplicate detection
+                if (currentAlexBubble) {
+                    lastAlexText = currentAlexBubble.textContent || "";
+                }
                 currentAlexBubble = null;
                 currentUserBubble = null;
             } else if (data.type === "text") {
