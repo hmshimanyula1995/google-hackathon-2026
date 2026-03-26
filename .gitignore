@@ -23,3 +23,7 @@ pipeline/data/
 
 # ADK local state
 .adk/
+
+# Superpowers plugin output
+docs/superpowers/
+.worktrees/
