@@ -2,8 +2,10 @@
 .agent/
 
 # AI assistant instructions (private)
-CLAUDE.md
-AGENTS.md
+# CLAUDE.md is now committed (stub)
+CLAUDE.local.md
+.claude/settings.local.json
+# AGENTS.md is now committed (stub)
 
 # Environment
 .env
