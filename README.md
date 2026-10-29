@@ -322,4 +322,6 @@ Settings: 2 CPU, 4GB RAM, session affinity, 3600s timeout, no-cpu-throttling, mi
 
 ## License
 
-Created for the Gemini Live Agent Challenge. IP retained per contest rules (Section 12).
+[MIT](LICENSE) © 2026 Micheal Hudson Shimanyula
+
+Originally created for the Gemini Live Agent Challenge; the entrant retains IP under the contest rules (Section 12).
