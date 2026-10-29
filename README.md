@@ -291,14 +291,64 @@ Settings: 2 CPU, 4GB RAM, session affinity, 3600s timeout, no-cpu-throttling, mi
 
 ## Roadmap
 
-The hackathon build works end to end but was written for one demo session at a time. Planned work:
+Goal: grow Next Live from a single-event hackathon demo into an open-source, self-hostable voice companion that any conference can point at its own agenda and talks. Estimates are rough; the total is about 320 hours.
 
-- [ ] **Per-session state.** The tool guards (`_flight_searched`, `_hotel_searched`) and the slide queue are module-level globals shared by every connected user. Move them into ADK session state so concurrent visitors don't interfere with each other.
-- [ ] **Test suite.** There are no automated tests yet. Add pytest coverage for the concierge tools, the A2A hotel/flight agents, the RAG search tool and the WebSocket handlers (with the Live API mocked).
-- [ ] **Lock down the invitation endpoint.** `POST /api/invitation` sends email to any address it receives. Add rate limiting and bot protection, and stop writing raw email addresses to logs.
-- [ ] **Configuration cleanup.** Remove hard-coded sender/recipient defaults and read them from environment variables or Secret Manager, documented in `.env.example`.
-- [ ] **Refresh the knowledge base.** Re-run the pipeline on Google Cloud Next '26 sessions and make the event (name, dates, city) configurable instead of hard-coded to Next '25 in Las Vegas.
-- [ ] **CI quality gates.** Add ruff and mypy, and run the tests in `cloudbuild.yaml` before deploying.
+Principles: no attendee accounts, no payments or real bookings, no model training. Visitor data stays in the browser.
+
+### Phase 1: Hardening (~45h)
+
+- [ ] Per-session state: move `_flight_searched`, `_hotel_searched` and the slide queue out of module globals into ADK session state (~6h)
+- [ ] Test suite: pytest for the tools, A2A agents, RAG search and WebSocket handlers, with the Live API mocked (~20h)
+- [ ] CI: ruff, mypy (strict), pytest and coverage in GitHub Actions and `cloudbuild.yaml` (~5h)
+- [ ] Typed settings module (pydantic-settings); remove hard-coded sender/recipient defaults (~5h)
+- [ ] Invitation endpoint: downloadable card by default, email opt-in for self-hosters, rate limiting, bot protection, no email addresses in logs (~6h)
+- [ ] Structured logging and error reporting (~3h)
+
+### Phase 2: Any event, not just Next '25 (~60h)
+
+- [ ] Event config file (YAML): name, dates, city, branding, agent personas and voices (~10h)
+- [ ] Pluggable knowledge sources: YouTube, PDFs, slide decks, web pages, agenda JSON/ICS (~20h)
+- [ ] Incremental ingestion CLI that dedupes and re-embeds only changed content (~10h)
+- [ ] Agenda tools: "what's on at 2 pm", topic-based session suggestions, room and time lookups (~12h)
+- [ ] A Next '26 knowledge pack built with the new pipeline (~8h)
+
+### Phase 3: Voice and accessibility (~55h)
+
+- [ ] Multi-language conversations with language auto-detect (~12h)
+- [ ] Accessibility: live captions, transcript panel, keyboard navigation, screen-reader labels, reduced motion (~12h)
+- [ ] Text chat fallback when there's no microphone (~6h)
+- [ ] Mobile-first layout and installable PWA (~10h)
+- [ ] Per-event slide themes and keynote deck export to PDF (~10h)
+- [ ] Latency instrumentation and barge-in tuning (~5h)
+
+### Phase 4: More agents (~50h)
+
+- [ ] Venue agent: floor plans, room directions, photo-based "where am I" (~12h)
+- [ ] Cited answers: link each keynote answer to its source clip with a timestamped YouTube link (~8h)
+- [ ] Personal agenda builder kept in the browser, exportable as .ics (~10h)
+- [ ] Flight and hotel search adapters behind one interface (search only, sandbox providers) (~12h)
+- [ ] Local-guide A2A agent (food and transit near the venue); standalone-deployable A2A agents with published agent cards (~8h)
+
+### Phase 5: Self-hosting and developer experience (~50h)
+
+- [ ] Run locally without GCP: Firestore emulator and a swappable vector store (SQLite / pgvector) (~15h)
+- [ ] Docker Compose and a one-command setup script (~5h)
+- [ ] Terraform for the GCP resources, replacing the imperative `deploy.sh` (~10h)
+- [ ] Plugin API for adding custom agents and tools (~12h)
+- [ ] Synthetic sample event for demos and tests (~3h)
+- [ ] Docs site: architecture, adding an agent, deploying (~5h)
+
+### Phase 6: Organizer console (~35h)
+
+- [ ] Organizer-only admin page (single admin login): upload content, edit personas, preview agents (~20h)
+- [ ] Anonymous aggregate analytics: popular topics and questions, no visitor identifiers (~8h)
+- [ ] Per-event moderation: blocked topics and safe-answer rules (~7h)
+
+### Phase 7: Observability and cost (~25h)
+
+- [ ] OpenTelemetry traces across WebSocket → agent → tool → A2A (~10h)
+- [ ] Per-session token and image cost tracking with budget caps (~8h)
+- [ ] Load tests for concurrent voice sessions and Cloud Run autoscaling tuning (~7h)
 
 ---
 
