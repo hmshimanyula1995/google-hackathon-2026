@@ -1,6 +1,13 @@
 # Next Live — AI-Powered Conference Journey
 
-> **Gemini Live Agent Challenge** — Live Agents Category
+A voice-first web app that takes a conference attendee through the whole trip: an AI-generated invitation, a voice travel concierge that finds flights and hotels, and a live AI keynote presenter that answers questions about the talks.
+
+**Who it's for:** conference and event organizers who want an interactive, voice-driven attendee experience, and developers looking for a working reference of real-time voice agents (Gemini Live API + Google ADK + A2A) running on Cloud Run.
+
+**Built with:** Python 3.13, FastAPI, Google ADK, Gemini Live API, A2A protocol, Imagen 4, Firestore vector search, Vertex AI, Cloud Run, and a vanilla JS + Web Audio (AudioWorklet) frontend.
+
+**Status:** started as my solo entry to the Gemini Live Agent Challenge (March 2026). Next steps are in the [Roadmap](#roadmap).
+
 > 5 ADK Agents | 2 A2A Connections | 8 Google Cloud Services | Real-Time Voice | See + Hear + Speak
 
 **Live Demo:** [next-live-agent-338756532561.us-central1.run.app](https://next-live-agent-338756532561.us-central1.run.app)
@@ -152,44 +159,9 @@ Agent cards available at `/a2a/hotel/.well-known/agent-card.json` and `/a2a/flig
 
 ---
 
-## Judging Criteria Coverage
+## Background
 
-### Innovation & Multimodal User Experience (40%)
-
-| Criterion | Evidence |
-|-----------|---------|
-| **Breaks text-box paradigm** | Voice-first. Email input is the only text. Core journey is all voice. |
-| **See, Hear, Speak** | **Hear:** Live API audio input. **Speak:** Native audio, 2 voices. **See (in):** Maya image upload. **See (out):** Imagen slides + invitations. |
-| **Distinct persona/voice** | Maya: warm concierge (Aoede). Alex: keynote presenter (Kore, 12 rhetorical techniques). |
-| **Interruptions** | VAD `prefix_padding_ms=0`, `start_sensitivity=HIGH`. Instant buffer clear. |
-| **Context-aware** | Python callbacks track topics, detect bridges ("You asked about ADK and A2A — they work together"). |
-| **3-stage journey** | Invitation → travel booking → keynote. Complete narrative arc. |
-
-### Technical Implementation & Agent Architecture (30%)
-
-| Criterion | Evidence |
-|-----------|---------|
-| **ADK usage** | 5 LlmAgents, FunctionTools, callbacks, A2A, RunConfig with BIDI streaming |
-| **A2A Protocol** | 2 connections (Concierge → Hotel, Concierge → Flight), JSON-RPC 2.0, agent cards |
-| **Google Cloud hosting** | Cloud Run, Firestore, Vertex AI, Imagen, Secret Manager, Cloud Build — 8 services |
-| **Agent logic** | Single-responsibility agents, session-scoped queues, tool caching, async A2A calls |
-| **Grounding** | Firestore RAG (264 min of transcripts) + google_search (live hotel/flight data) |
-
-### Demo & Presentation (30%)
-
-| Criterion | Evidence |
-|-----------|---------|
-| **Problem + solution** | Conference logistics = human assembly line. Next Live = AI agents running it end-to-end. |
-| **Architecture diagram** | In this README + exportable from mermaid.live |
-| **Cloud deployment proof** | Live URL on Cloud Run. `deploy.sh` + `cloudbuild.yaml` in repo. |
-| **Working software** | Live interactive demo at the URL above. |
-
-### Bonus Points
-
-| Bonus | Points | Evidence |
-|-------|--------|----------|
-| **IaC deployment** | +0.2 | `deploy.sh` + `cloudbuild.yaml` |
-| **Content publication** | +0.6 | Blog post on dev.to |
+Next Live was built solo for Google's Gemini Live Agent Challenge (Devpost, Live Agents category, deadline March 16, 2026). The write-up is in [`blog-post.md`](blog-post.md); the contest judging-criteria mapping lives in the git history.
 
 ---
 
@@ -240,6 +212,7 @@ python3 main.py
 | `GOOGLE_CLOUD_LOCATION` | Yes | `us-central1` | GCP region |
 | `GOOGLE_GENAI_USE_VERTEXAI` | Yes | `True` | Use Vertex AI backend |
 | `GMAIL_APP_PASSWORD` | No | (Secret Manager) | Gmail app password for emails |
+| `INVITATION_EMAIL` | No | (built-in) | Fallback recipient for invitation and itinerary emails |
 | `PORT` | No | `8000` / `8080` | Server port |
 
 ### Deploy to Cloud Run
@@ -316,9 +289,22 @@ Settings: 2 CPU, 4GB RAM, session affinity, 3600s timeout, no-cpu-throttling, mi
 
 ---
 
+## Roadmap
+
+The hackathon build works end to end but was written for one demo session at a time. Planned work:
+
+- [ ] **Per-session state.** The tool guards (`_flight_searched`, `_hotel_searched`) and the slide queue are module-level globals shared by every connected user. Move them into ADK session state so concurrent visitors don't interfere with each other.
+- [ ] **Test suite.** There are no automated tests yet. Add pytest coverage for the concierge tools, the A2A hotel/flight agents, the RAG search tool and the WebSocket handlers (with the Live API mocked).
+- [ ] **Lock down the invitation endpoint.** `POST /api/invitation` sends email to any address it receives. Add rate limiting and bot protection, and stop writing raw email addresses to logs.
+- [ ] **Configuration cleanup.** Remove hard-coded sender/recipient defaults and read them from environment variables or Secret Manager, documented in `.env.example`.
+- [ ] **Refresh the knowledge base.** Re-run the pipeline on Google Cloud Next '26 sessions and make the event (name, dates, city) configurable instead of hard-coded to Next '25 in Las Vegas.
+- [ ] **CI quality gates.** Add ruff and mypy, and run the tests in `cloudbuild.yaml` before deploying.
+
+---
+
 ## Team
 
-**Michael Hudson Shimanyula** — [github.com/hmshimanyula1995](https://github.com/hmshimanyula1995)
+**Micheal Hudson Shimanyula** — [github.com/hmshimanyula1995](https://github.com/hmshimanyula1995)
 
 ## License
 
