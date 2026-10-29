@@ -55,14 +55,14 @@ def _get_gmail_password() -> str | None:
     return _gmail_password
 
 
-GMAIL_SENDER = "hudsonshimanyula@gmail.com"
+GMAIL_SENDER = os.environ.get("GMAIL_SENDER", "")
 
 
 def _send_email_smtp(to_email: str, subject: str, html: str, image_bytes: bytes | None = None) -> bool:
     """Send an HTML email via Gmail SMTP. Attaches invitation image if provided."""
     password = _get_gmail_password()
-    if not password or password == "PLACEHOLDER":
-        logger.warning("[GMAIL] No app password configured — skipping email")
+    if not GMAIL_SENDER or not password or password == "PLACEHOLDER":
+        logger.warning("[GMAIL] GMAIL_SENDER or app password not configured — skipping email")
         return False
 
     try:

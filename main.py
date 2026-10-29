@@ -294,7 +294,7 @@ async def create_invitation(request: Request):
         email = ""
 
     if not email:
-        email = os.environ.get("INVITATION_EMAIL", "hudsonshimanyula@gmail.com")
+        email = os.environ.get("INVITATION_EMAIL", "attendee@example.com")
 
     logger.info("[INVITATION] Generating invitation card for: %s", email)
     result = generate_invitation(email)
@@ -505,7 +505,7 @@ async def concierge_websocket(websocket: WebSocket, session_id: str):
     logger.info("[CONCIERGE] Itinerary queue created for session: %s", session_id)
 
     # Get traveler email for confirm_booking tool
-    traveler_email = os.environ.get("INVITATION_EMAIL", "hudsonshimanyula@gmail.com")
+    traveler_email = os.environ.get("INVITATION_EMAIL", "attendee@example.com")
     logger.info("[CONCIERGE] Traveler email: %s", traveler_email)
 
     session = await session_service.create_session(

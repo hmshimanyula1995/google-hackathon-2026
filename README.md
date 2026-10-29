@@ -212,7 +212,8 @@ python3 main.py
 | `GOOGLE_CLOUD_LOCATION` | Yes | `us-central1` | GCP region |
 | `GOOGLE_GENAI_USE_VERTEXAI` | Yes | `True` | Use Vertex AI backend |
 | `GMAIL_APP_PASSWORD` | No | (Secret Manager) | Gmail app password for emails |
-| `INVITATION_EMAIL` | No | (built-in) | Fallback recipient for invitation and itinerary emails |
+| `GMAIL_SENDER` | No | (unset) | Gmail address that sends invitation and itinerary emails; email is skipped when unset |
+| `INVITATION_EMAIL` | No | `attendee@example.com` | Fallback recipient for invitation and itinerary emails |
 | `PORT` | No | `8000` / `8080` | Server port |
 
 ### Deploy to Cloud Run
@@ -300,7 +301,7 @@ Principles: no attendee accounts, no payments or real bookings, no model trainin
 - [ ] Per-session state: move `_flight_searched`, `_hotel_searched` and the slide queue out of module globals into ADK session state (~6h)
 - [ ] Test suite: pytest for the tools, A2A agents, RAG search and WebSocket handlers, with the Live API mocked (~20h)
 - [ ] CI: ruff, mypy (strict), pytest and coverage in GitHub Actions and `cloudbuild.yaml` (~5h)
-- [ ] Typed settings module (pydantic-settings); remove hard-coded sender/recipient defaults (~5h)
+- [ ] Typed settings module (pydantic-settings) for all configuration (~5h)
 - [ ] Invitation endpoint: downloadable card by default, email opt-in for self-hosters, rate limiting, bot protection, no email addresses in logs (~6h)
 - [ ] Structured logging and error reporting (~3h)
 
